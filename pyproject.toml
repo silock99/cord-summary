@@ -1,0 +1,25 @@
+[project]
+name = "discord-summary-bot"
+version = "0.1.0"
+description = "Discord bot that summarizes channel discussions on demand and on a schedule"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "discord.py>=2.7.1",
+    "openai>=1.0.0",
+    "pydantic-settings>=2.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bot"]
+
+[dependency-groups]
+dev = [
+    "ruff",
+    "pytest",
+    "pytest-asyncio",
+]
