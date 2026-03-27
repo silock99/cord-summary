@@ -17,10 +17,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Message Pipeline
 
-- [ ] **PIPE-01**: Bot fetches messages with pagination to handle channels with 100+ messages
-- [ ] **PIPE-02**: Bot filters out bot messages and system messages before summarizing
+- [x] **PIPE-01**: Bot fetches messages with pagination to handle channels with 100+ messages
+- [x] **PIPE-02**: Bot filters out bot messages and system messages before summarizing
 - [ ] **PIPE-03**: User can choose which channel to summarize via slash command option
-- [ ] **PIPE-04**: Large message sets are chunked to fit within LLM context window limits
+- [x] **PIPE-04**: Large message sets are chunked to fit within LLM context window limits
 
 ### AI Backend
 
@@ -83,10 +83,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SUM-03 | Phase 2 | Pending |
 | SUM-04 | Phase 2 | Pending |
 | SUM-05 | Phase 2 | Pending |
-| PIPE-01 | Phase 1 | Pending |
-| PIPE-02 | Phase 1 | Pending |
+| PIPE-01 | Phase 1 | Complete |
+| PIPE-02 | Phase 1 | Complete |
 | PIPE-03 | Phase 2 | Pending |
-| PIPE-04 | Phase 1 | Pending |
+| PIPE-04 | Phase 1 | Complete |
 | AI-01 | Phase 1 | Pending |
 | AI-02 | Phase 1 | Pending |
 | AI-03 | Phase 1 | Pending |
