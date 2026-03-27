@@ -28,7 +28,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Bot can fetch 100+ messages from a channel with pagination and filter out bot/system messages
   4. A summary can be generated from a set of messages using at least one LLM provider, with graceful error handling on API failures
   5. Large message sets are chunked to stay within LLM context window limits
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Project scaffolding, config, shared models, and bot client with slash command sync
+- [ ] 01-02-PLAN.md — Message pipeline: fetcher, preprocessor, and time-based chunker
+- [ ] 01-03-PLAN.md — AI provider interface, OpenAI implementation, and summarizer orchestrator
 
 ### Phase 2: On-Demand Summarization
 **Goal**: Users can run a slash command and receive a well-formatted summary of recent channel activity posted to a dedicated channel
@@ -60,6 +65,6 @@ Phases execute in numeric order: 1 -> 2 -> 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation and Pipeline | 0/0 | Not started | - |
+| 1. Foundation and Pipeline | 0/3 | Planning complete | - |
 | 2. On-Demand Summarization | 0/0 | Not started | - |
 | 3. Scheduling and Delivery | 0/0 | Not started | - |
