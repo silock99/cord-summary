@@ -48,7 +48,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Config extensions, updated system prompt, and embed formatting with topic-boundary splitting
+- [x] 02-01-PLAN.md — Config extensions, updated system prompt, and embed formatting with topic-boundary splitting
 - [ ] 02-02-PLAN.md — /summary slash command handler with provider wiring and end-to-end verification
 
 ### Phase 3: Scheduling and Delivery

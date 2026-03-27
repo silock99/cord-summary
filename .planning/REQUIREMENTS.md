@@ -11,9 +11,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **SUM-01**: User can run `/summary` to get a bullet-point summary of recent channel messages
 - [ ] **SUM-02**: User can specify a time range (e.g., "last 2 hours") via slash command option
-- [ ] **SUM-03**: Summaries are grouped by discussion topic with clear headers
+- [x] **SUM-03**: Summaries are grouped by discussion topic with clear headers
 - [ ] **SUM-04**: Action items and decisions are extracted as a separate section in the summary
-- [ ] **SUM-05**: Empty or low-activity periods return a "no significant activity" message
+- [x] **SUM-05**: Empty or low-activity periods return a "no significant activity" message
 
 ### Message Pipeline
 
@@ -31,7 +31,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Output & Delivery
 
 - [ ] **OUT-01**: Summaries are posted to a configurable dedicated #summaries channel
-- [ ] **OUT-02**: Summaries use Discord embed formatting with proper length handling (split if > 4096 chars)
+- [x] **OUT-02**: Summaries use Discord embed formatting with proper length handling (split if > 4096 chars)
 - [ ] **OUT-03**: User can optionally receive the summary as a DM
 - [ ] **OUT-04**: Summaries can be posted as a thread to keep channels clean
 
@@ -80,9 +80,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | SUM-01 | Phase 2 | Pending |
 | SUM-02 | Phase 2 | Pending |
-| SUM-03 | Phase 2 | Pending |
+| SUM-03 | Phase 2 | Complete |
 | SUM-04 | Phase 2 | Pending |
-| SUM-05 | Phase 2 | Pending |
+| SUM-05 | Phase 2 | Complete |
 | PIPE-01 | Phase 1 | Complete |
 | PIPE-02 | Phase 1 | Complete |
 | PIPE-03 | Phase 2 | Pending |
@@ -91,7 +91,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AI-02 | Phase 1 | Complete |
 | AI-03 | Phase 1 | Complete |
 | OUT-01 | Phase 2 | Pending |
-| OUT-02 | Phase 2 | Pending |
+| OUT-02 | Phase 2 | Complete |
 | OUT-03 | Phase 3 | Pending |
 | OUT-04 | Phase 3 | Pending |
 | SCHED-01 | Phase 3 | Pending |
