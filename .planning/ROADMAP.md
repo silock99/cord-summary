@@ -31,7 +31,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Project scaffolding, config, shared models, and bot client with slash command sync
+- [x] 01-01-PLAN.md — Project scaffolding, config, shared models, and bot client with slash command sync
 - [ ] 01-02-PLAN.md — Message pipeline: fetcher, preprocessor, and time-based chunker
 - [ ] 01-03-PLAN.md — AI provider interface, OpenAI implementation, and summarizer orchestrator
 

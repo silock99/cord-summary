@@ -42,9 +42,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: Bot connects to Discord with proper intents (including Message Content)
-- [ ] **INFRA-02**: Configuration via environment variables (bot token, channel IDs, timezone, LLM API key)
-- [ ] **INFRA-03**: Slash commands are registered and synced on bot startup
+- [x] **INFRA-01**: Bot connects to Discord with proper intents (including Message Content)
+- [x] **INFRA-02**: Configuration via environment variables (bot token, channel IDs, timezone, LLM API key)
+- [x] **INFRA-03**: Slash commands are registered and synced on bot startup
 
 ## v2 Requirements
 
@@ -96,9 +96,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OUT-04 | Phase 3 | Pending |
 | SCHED-01 | Phase 3 | Pending |
 | SCHED-02 | Phase 3 | Pending |
-| INFRA-01 | Phase 1 | Pending |
-| INFRA-02 | Phase 1 | Pending |
-| INFRA-03 | Phase 1 | Pending |
+| INFRA-01 | Phase 1 | Complete |
+| INFRA-02 | Phase 1 | Complete |
+| INFRA-03 | Phase 1 | Complete |
 
 **Coverage:**
 - v1 requirements: 21 total
