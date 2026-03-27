@@ -3,7 +3,9 @@ import logging
 import discord
 from discord.ext import commands
 
+from bot.commands.summary import register_summary_command
 from bot.config import Settings
+from bot.providers.base import SummaryProvider
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +17,11 @@ class SummaryBot(commands.Bot):
         intents.members = True           # For mention resolution (D-04)
         super().__init__(command_prefix="!", intents=intents)
         self.settings = settings
+        self.provider: SummaryProvider | None = None
 
     async def setup_hook(self) -> None:
-        """Sync slash commands to the configured guild (INFRA-03). Fires once before connecting."""
+        """Register commands and sync to the configured guild (INFRA-03). Fires once before connecting."""
+        register_summary_command(self)
         guild = discord.Object(id=self.settings.guild_id)
         self.tree.copy_global_to(guild=guild)
         synced = await self.tree.sync(guild=guild)
