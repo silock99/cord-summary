@@ -12,7 +12,8 @@ Users can quickly catch up on what they missed without reading through hundreds 
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] AI summarization backend is pluggable (provider-agnostic interface) — Validated in Phase 1: Foundation and Pipeline
+- [x] Bot reads message history from Discord channels to feed into summarization — Validated in Phase 1: Foundation and Pipeline
 
 ### Active
 
@@ -21,8 +22,6 @@ Users can quickly catch up on what they missed without reading through hundreds 
 - [ ] Summaries are formatted as concise bullet-point recaps of key topics and takeaways
 - [ ] Summaries are posted to a dedicated #summaries channel
 - [ ] Users can optionally receive the summary as a DM
-- [ ] AI summarization backend is pluggable (provider-agnostic interface)
-- [ ] Bot reads message history from Discord channels to feed into summarization
 - [ ] Any server member can use the summary commands (no role restrictions)
 
 ### Out of Scope
@@ -76,4 +75,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-27 after initialization*
+*Last updated: 2026-03-27 after Phase 1 completion — foundation, message pipeline, and AI provider established*
