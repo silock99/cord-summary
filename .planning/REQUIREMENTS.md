@@ -24,9 +24,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### AI Backend
 
-- [ ] **AI-01**: Summarization uses a pluggable provider interface (abstract backend)
-- [ ] **AI-02**: At least one concrete LLM provider implementation is included
-- [ ] **AI-03**: Bot handles LLM errors gracefully (timeout, rate limit, API errors)
+- [x] **AI-01**: Summarization uses a pluggable provider interface (abstract backend)
+- [x] **AI-02**: At least one concrete LLM provider implementation is included
+- [x] **AI-03**: Bot handles LLM errors gracefully (timeout, rate limit, API errors)
 
 ### Output & Delivery
 
@@ -87,9 +87,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PIPE-02 | Phase 1 | Complete |
 | PIPE-03 | Phase 2 | Pending |
 | PIPE-04 | Phase 1 | Complete |
-| AI-01 | Phase 1 | Pending |
-| AI-02 | Phase 1 | Pending |
-| AI-03 | Phase 1 | Pending |
+| AI-01 | Phase 1 | Complete |
+| AI-02 | Phase 1 | Complete |
+| AI-03 | Phase 1 | Complete |
 | OUT-01 | Phase 2 | Pending |
 | OUT-02 | Phase 2 | Pending |
 | OUT-03 | Phase 3 | Pending |

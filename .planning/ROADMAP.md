@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 - [x] 01-01-PLAN.md — Project scaffolding, config, shared models, and bot client with slash command sync
 - [x] 01-02-PLAN.md — Message pipeline: fetcher, preprocessor, and time-based chunker
-- [ ] 01-03-PLAN.md — AI provider interface, OpenAI implementation, and summarizer orchestrator
+- [x] 01-03-PLAN.md — AI provider interface, OpenAI implementation, and summarizer orchestrator
 
 ### Phase 2: On-Demand Summarization
 **Goal**: Users can run a slash command and receive a well-formatted summary of recent channel activity posted to a dedicated channel
