@@ -14,12 +14,13 @@ Users can quickly catch up on what they missed without reading through hundreds 
 
 - [x] AI summarization backend is pluggable (provider-agnostic interface) — Validated in Phase 1: Foundation and Pipeline
 - [x] Bot reads message history from Discord channels to feed into summarization — Validated in Phase 1: Foundation and Pipeline
+- [x] Users can run a slash command to get a summary of recent discussion — Validated in Phase 2: On-Demand Summarization
+- [x] Summaries are formatted as concise bullet-point recaps of key topics — Validated in Phase 2: On-Demand Summarization
 
 ### Active
 
-- [ ] Users can run a slash command to get a summary of the last hour of discussion
 - [ ] Bot automatically generates and posts an overnight summary (10pm-9am) at 9am daily
-- [ ] Summaries are formatted as concise bullet-point recaps of key topics and takeaways
+- [ ] Bot automatically generates and posts an overnight summary (10pm-9am) at 9am daily
 - [ ] Summaries are posted to a dedicated #summaries channel
 - [ ] Users can optionally receive the summary as a DM
 - [ ] Any server member can use the summary commands (no role restrictions)
@@ -55,7 +56,9 @@ Users can quickly catch up on what they missed without reading through hundreds 
 | Python + discord.py | Most mature Discord bot ecosystem, strong async support | — Pending |
 | Pluggable AI backend | User wants to decide AI provider later; keeps options open | — Pending |
 | Dedicated summary channel | Keeps summaries organized, doesn't clutter discussion channels | — Pending |
-| Slash commands over prefix commands | Modern Discord standard, better UX with autocomplete | — Pending |
+| Slash commands over prefix commands | Modern Discord standard, better UX with autocomplete | ✓ Validated Phase 2 |
+| Ephemeral on-demand summaries | On-demand summaries are private; public posting reserved for scheduled summaries | ✓ Decided Phase 2 (D-03) |
+| No action items extraction in v1 | Topic-grouped bullets only; action items deferred | ✓ Decided Phase 2 (D-13) |
 
 ## Evolution
 
@@ -75,4 +78,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-27 after Phase 1 completion — foundation, message pipeline, and AI provider established*
+*Last updated: 2026-03-27 after Phase 2 completion — on-demand /summary command with ephemeral topic-grouped embeds, channel allowlist, quiet detection*
