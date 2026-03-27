@@ -19,14 +19,17 @@ logger = logging.getLogger(__name__)
 
 SUMMARY_SYSTEM_PROMPT = (
     "You are a Discord channel summarizer. Given a conversation log, produce a concise "
-    "bullet-point summary organized by topic. Include key decisions and action items. "
-    "Use clear, brief language. Do not include timestamps or repeat verbatim quotes."
+    "summary organized by discussion topic. Format each topic with a bold header "
+    "(**Topic Name**) followed by bullet points underneath. "
+    "Keep language clear and brief. Do not include timestamps or repeat verbatim quotes. "
+    "Do not extract action items or decisions as separate sections."
 )
 
 MERGE_SYSTEM_PROMPT = (
     "You are a Discord channel summarizer. Given multiple time-period summaries from the same channel, "
-    "produce one unified bullet-point summary organized by topic. Merge related topics, remove redundancy, "
-    "and highlight key decisions and action items."
+    "produce one unified summary organized by discussion topic. Format each topic with a bold header "
+    "(**Topic Name**) followed by bullet points underneath. Merge related topics and remove redundancy. "
+    "Do not extract action items or decisions as separate sections."
 )
 
 
