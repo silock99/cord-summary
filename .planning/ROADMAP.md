@@ -49,7 +49,7 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md — Config extensions, updated system prompt, and embed formatting with topic-boundary splitting
-- [ ] 02-02-PLAN.md — /summary slash command handler with provider wiring and end-to-end verification
+- [x] 02-02-PLAN.md — /summary slash command handler with provider wiring and end-to-end verification
 
 ### Phase 3: Scheduling and Delivery
 **Goal**: The bot automatically posts an overnight summary every morning and users can choose to receive summaries via DM or as threads

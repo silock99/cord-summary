@@ -9,17 +9,17 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Summarization
 
-- [ ] **SUM-01**: User can run `/summary` to get a bullet-point summary of recent channel messages
-- [ ] **SUM-02**: User can specify a time range (e.g., "last 2 hours") via slash command option
+- [x] **SUM-01**: User can run `/summary` to get a bullet-point summary of recent channel messages
+- [x] **SUM-02**: User can specify a time range (e.g., "last 2 hours") via slash command option
 - [x] **SUM-03**: Summaries are grouped by discussion topic with clear headers
-- [ ] **SUM-04**: Action items and decisions are extracted as a separate section in the summary
+- [x] **SUM-04**: Action items and decisions are extracted as a separate section in the summary
 - [x] **SUM-05**: Empty or low-activity periods return a "no significant activity" message
 
 ### Message Pipeline
 
 - [x] **PIPE-01**: Bot fetches messages with pagination to handle channels with 100+ messages
 - [x] **PIPE-02**: Bot filters out bot messages and system messages before summarizing
-- [ ] **PIPE-03**: User can choose which channel to summarize via slash command option
+- [x] **PIPE-03**: User can choose which channel to summarize via slash command option
 - [x] **PIPE-04**: Large message sets are chunked to fit within LLM context window limits
 
 ### AI Backend
@@ -30,7 +30,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Output & Delivery
 
-- [ ] **OUT-01**: Summaries are posted to a configurable dedicated #summaries channel
+- [x] **OUT-01**: Summaries are posted to a configurable dedicated #summaries channel
 - [x] **OUT-02**: Summaries use Discord embed formatting with proper length handling (split if > 4096 chars)
 - [ ] **OUT-03**: User can optionally receive the summary as a DM
 - [ ] **OUT-04**: Summaries can be posted as a thread to keep channels clean
@@ -78,19 +78,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SUM-01 | Phase 2 | Pending |
-| SUM-02 | Phase 2 | Pending |
+| SUM-01 | Phase 2 | Complete |
+| SUM-02 | Phase 2 | Complete |
 | SUM-03 | Phase 2 | Complete |
-| SUM-04 | Phase 2 | Pending |
+| SUM-04 | Phase 2 | Complete |
 | SUM-05 | Phase 2 | Complete |
 | PIPE-01 | Phase 1 | Complete |
 | PIPE-02 | Phase 1 | Complete |
-| PIPE-03 | Phase 2 | Pending |
+| PIPE-03 | Phase 2 | Complete |
 | PIPE-04 | Phase 1 | Complete |
 | AI-01 | Phase 1 | Complete |
 | AI-02 | Phase 1 | Complete |
 | AI-03 | Phase 1 | Complete |
-| OUT-01 | Phase 2 | Pending |
+| OUT-01 | Phase 2 | Complete |
 | OUT-02 | Phase 2 | Complete |
 | OUT-03 | Phase 3 | Pending |
 | OUT-04 | Phase 3 | Pending |
