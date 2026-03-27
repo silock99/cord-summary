@@ -38,12 +38,12 @@ Plans:
 ### Phase 2: On-Demand Summarization
 **Goal**: Users can run `/summary` and receive an ephemeral, topic-grouped bullet-point summary of recent channel activity with time range selection and channel targeting
 **Depends on**: Phase 1
-**Requirements**: SUM-01, SUM-02, SUM-03, SUM-04, SUM-05, PIPE-03, OUT-01, OUT-02
+**Requirements**: SUM-01, SUM-02, SUM-03, SUM-05, PIPE-03, OUT-02 *(SUM-04 deferred per D-13, OUT-01 deferred per D-14 to Phase 3)*
 **Success Criteria** (what must be TRUE):
   1. User can run `/summary` and receive a bullet-point recap of recent messages, with response deferred properly (no 3-second timeout)
   2. User can specify a time range and choose which channel to summarize via slash command options
-  3. Summaries are grouped by discussion topic with action items and decisions extracted as a separate section
-  4. Summaries are posted to a configurable dedicated channel using Discord embeds, with proper splitting if content exceeds 4096 characters
+  3. Summaries are grouped by discussion topic with bold headers and bullet points
+  4. Summaries are posted as ephemeral Discord embeds, with proper splitting if content exceeds 4096 characters
   5. Quiet channels return a clear "no significant activity" message instead of an error
 **Plans:** 2 plans
 
