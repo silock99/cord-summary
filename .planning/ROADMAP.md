@@ -36,7 +36,7 @@ Plans:
 - [x] 01-03-PLAN.md — AI provider interface, OpenAI implementation, and summarizer orchestrator
 
 ### Phase 2: On-Demand Summarization
-**Goal**: Users can run a slash command and receive a well-formatted summary of recent channel activity posted to a dedicated channel
+**Goal**: Users can run `/summary` and receive an ephemeral, topic-grouped bullet-point summary of recent channel activity with time range selection and channel targeting
 **Depends on**: Phase 1
 **Requirements**: SUM-01, SUM-02, SUM-03, SUM-04, SUM-05, PIPE-03, OUT-01, OUT-02
 **Success Criteria** (what must be TRUE):
@@ -45,7 +45,11 @@ Plans:
   3. Summaries are grouped by discussion topic with action items and decisions extracted as a separate section
   4. Summaries are posted to a configurable dedicated channel using Discord embeds, with proper splitting if content exceeds 4096 characters
   5. Quiet channels return a clear "no significant activity" message instead of an error
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Config extensions, updated system prompt, and embed formatting with topic-boundary splitting
+- [ ] 02-02-PLAN.md — /summary slash command handler with provider wiring and end-to-end verification
 
 ### Phase 3: Scheduling and Delivery
 **Goal**: The bot automatically posts an overnight summary every morning and users can choose to receive summaries via DM or as threads
@@ -66,5 +70,5 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation and Pipeline | 0/3 | Planning complete | - |
-| 2. On-Demand Summarization | 0/0 | Not started | - |
+| 2. On-Demand Summarization | 0/2 | Planning complete | - |
 | 3. Scheduling and Delivery | 0/0 | Not started | - |
