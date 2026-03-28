@@ -6,6 +6,7 @@ from discord.ext import commands
 from bot.commands.summary import register_summary_command
 from bot.config import Settings
 from bot.providers.base import SummaryProvider
+from bot.scheduling.overnight import OvernightScheduler
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ class SummaryBot(commands.Bot):
         super().__init__(command_prefix="!", intents=intents)
         self.settings = settings
         self.provider: SummaryProvider | None = None
+        self.scheduler: OvernightScheduler | None = None
 
     async def setup_hook(self) -> None:
         """Register commands and sync to the configured guild (INFRA-03). Fires once before connecting."""
@@ -26,6 +28,11 @@ class SummaryBot(commands.Bot):
         self.tree.copy_global_to(guild=guild)
         synced = await self.tree.sync(guild=guild)
         logger.info(f"Synced {len(synced)} command(s) to guild {self.settings.guild_id}")
+
+        # Start overnight summary scheduler (SCHED-01)
+        self.scheduler = OvernightScheduler(self)
+        self.scheduler.start()
+        logger.info("Overnight summary scheduler started")
 
     async def on_ready(self) -> None:
         logger.info(f"Bot connected as {self.user} (ID: {self.user.id})")
