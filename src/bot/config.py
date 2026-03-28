@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     default_summary_minutes: int = 240
     quiet_threshold: int = 5
 
+    # Thread delivery (OUT-04, D-08, D-09)
+    use_threads: bool = False
+
     @computed_field  # type: ignore[prop-decorator]
     @property
     def allowed_channel_ids(self) -> list[int]:
