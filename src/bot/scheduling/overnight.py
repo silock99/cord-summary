@@ -131,6 +131,10 @@ class OvernightScheduler:
             )
             await target.send(embed=error_embed)
 
+        # Send DMs to opted-in subscribers (D-06, D-07)
+        if all_embeds and hasattr(self.bot, 'dm_manager') and self.bot.dm_manager is not None:
+            await self.bot.dm_manager.send_dm_summaries(self.bot, all_embeds)
+
         posted_count = len(all_embeds)
         logger.info(
             f"Overnight summary complete: {posted_count} embed(s) posted, "
