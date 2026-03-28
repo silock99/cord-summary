@@ -19,11 +19,13 @@ Users can quickly catch up on what they missed without reading through hundreds 
 
 ### Active
 
-- [ ] Bot automatically generates and posts an overnight summary (10pm-9am) at 9am daily
-- [ ] Bot automatically generates and posts an overnight summary (10pm-9am) at 9am daily
-- [ ] Summaries are posted to a dedicated #summaries channel
-- [ ] Users can optionally receive the summary as a DM
 - [ ] Any server member can use the summary commands (no role restrictions)
+
+### Validated (Phase 3)
+
+- [x] Bot automatically generates and posts an overnight summary (10pm-9am) at 9am daily — Validated in Phase 3: Scheduling and Delivery
+- [x] Summaries are posted to a dedicated #summaries channel — Validated in Phase 3: Scheduling and Delivery
+- [x] Users can optionally receive the summary as a DM — Validated in Phase 3: Scheduling and Delivery
 
 ### Out of Scope
 
@@ -55,7 +57,9 @@ Users can quickly catch up on what they missed without reading through hundreds 
 |----------|-----------|---------|
 | Python + discord.py | Most mature Discord bot ecosystem, strong async support | — Pending |
 | Pluggable AI backend | User wants to decide AI provider later; keeps options open | — Pending |
-| Dedicated summary channel | Keeps summaries organized, doesn't clutter discussion channels | — Pending |
+| Dedicated summary channel | Keeps summaries organized, doesn't clutter discussion channels | ✓ Validated Phase 3 |
+| Dynamic task loop for scheduling | `tasks.loop(time=)(method)` pattern for runtime timezone config | ✓ Decided Phase 3 |
+| JSON file persistence for DM opt-ins | Simple file-based storage avoids database dependency per project constraints | ✓ Decided Phase 3 |
 | Slash commands over prefix commands | Modern Discord standard, better UX with autocomplete | ✓ Validated Phase 2 |
 | Ephemeral on-demand summaries | On-demand summaries are private; public posting reserved for scheduled summaries | ✓ Decided Phase 2 (D-03) |
 | No action items extraction in v1 | Topic-grouped bullets only; action items deferred | ✓ Decided Phase 2 (D-13) |
@@ -78,4 +82,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-27 after Phase 2 completion — on-demand /summary command with ephemeral topic-grouped embeds, channel allowlist, quiet detection*
+*Last updated: 2026-03-27 after Phase 3 completion — overnight scheduler (9am daily), thread delivery, DM opt-in via /summary-dm, multi-channel support*
