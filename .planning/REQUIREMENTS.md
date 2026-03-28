@@ -33,12 +33,12 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **OUT-01**: Summaries are posted to a configurable dedicated #summaries channel
 - [x] **OUT-02**: Summaries use Discord embed formatting with proper length handling (split if > 4096 chars)
 - [ ] **OUT-03**: User can optionally receive the summary as a DM
-- [ ] **OUT-04**: Summaries can be posted as a thread to keep channels clean
+- [x] **OUT-04**: Summaries can be posted as a thread to keep channels clean
 
 ### Scheduling
 
-- [ ] **SCHED-01**: Bot automatically generates and posts an overnight summary (10pm-9am) at 9am daily
-- [ ] **SCHED-02**: Timezone is configurable via environment variable
+- [x] **SCHED-01**: Bot automatically generates and posts an overnight summary (10pm-9am) at 9am daily
+- [x] **SCHED-02**: Timezone is configurable via environment variable
 
 ### Infrastructure
 
@@ -93,9 +93,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OUT-01 | Phase 2 | Complete |
 | OUT-02 | Phase 2 | Complete |
 | OUT-03 | Phase 3 | Pending |
-| OUT-04 | Phase 3 | Pending |
-| SCHED-01 | Phase 3 | Pending |
-| SCHED-02 | Phase 3 | Pending |
+| OUT-04 | Phase 3 | Complete |
+| SCHED-01 | Phase 3 | Complete |
+| SCHED-02 | Phase 3 | Complete |
 | INFRA-01 | Phase 1 | Complete |
 | INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 1 | Complete |
