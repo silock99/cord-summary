@@ -64,7 +64,7 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md — Overnight scheduler with multi-channel orchestration and optional thread delivery
-- [ ] 03-02-PLAN.md — DM toggle command, subscriber persistence, and DM delivery wiring
+- [x] 03-02-PLAN.md — DM toggle command, subscriber persistence, and DM delivery wiring
 
 ## Progress
 
