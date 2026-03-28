@@ -60,7 +60,11 @@ Plans:
   2. The overnight window timezone is configurable via environment variable and handles DST correctly
   3. User can opt to receive a summary as a DM
   4. Summaries can be posted as a thread to keep channels clean
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Overnight scheduler with multi-channel orchestration and optional thread delivery
+- [ ] 03-02-PLAN.md — DM toggle command, subscriber persistence, and DM delivery wiring
 
 ## Progress
 
@@ -71,4 +75,4 @@ Phases execute in numeric order: 1 -> 2 -> 3
 |-------|----------------|--------|-----------|
 | 1. Foundation and Pipeline | 0/3 | Planning complete | - |
 | 2. On-Demand Summarization | 0/2 | Planning complete | - |
-| 3. Scheduling and Delivery | 0/0 | Not started | - |
+| 3. Scheduling and Delivery | 0/2 | Planning complete | - |
