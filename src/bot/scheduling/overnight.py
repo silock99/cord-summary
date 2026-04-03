@@ -136,6 +136,10 @@ class OvernightScheduler:
 
     async def _post_hourly_summary(self) -> None:
         now = datetime.now(self.tz)
+        # Skip during overnight window (10pm-9am) — the overnight task covers that
+        if now.hour >= 22 or now.hour < 9:
+            logger.info("Skipping hourly summary during overnight window")
+            return
         after = now - timedelta(hours=1)
         await self._post_summary("Hourly", after)
 
