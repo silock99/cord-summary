@@ -1,6 +1,7 @@
 """Summarizer orchestrator: fetch -> preprocess -> chunk -> summarize (PIPE-04)."""
 
 import logging
+from collections import Counter
 from datetime import datetime
 
 import discord
@@ -20,15 +21,30 @@ logger = logging.getLogger(__name__)
 SUMMARY_SYSTEM_PROMPT = (
     "You are a Discord channel summarizer. Given a conversation log, produce a concise "
     "summary organized by discussion topic. Format each topic with a bold header "
-    "(**Topic Name**) followed by bullet points underneath. "
-    "Keep language clear and brief. Do not include timestamps or repeat verbatim quotes. "
+    "(**Topic Name**) followed by bullet points underneath.\n\n"
+    "Signal markers in the input:\n"
+    "- [IMPORTANT]: Messages with @here or @everyone mentions. You MUST include "
+    "these verbatim in the summary -- do not paraphrase or omit them.\n"
+    "- [POPULAR]: Messages with high engagement (many reactions or replies). "
+    "Prioritize these in the summary.\n"
+    "- [N reactions]: Shows total reaction count, indicating community engagement.\n"
+    "- Indented lines starting with > are replies to the message above them, "
+    "showing conversation flow.\n"
+    "- [image: file], [video: file], [file: file]: Attachment metadata -- mention "
+    "what was shared.\n"
+    "- Embed content appears in parentheses after the message text.\n\n"
+    "Keep language clear and brief. Do not include timestamps. "
     "Do not extract action items or decisions as separate sections."
 )
 
 MERGE_SYSTEM_PROMPT = (
-    "You are a Discord channel summarizer. Given multiple time-period summaries from the same channel, "
-    "produce one unified summary organized by discussion topic. Format each topic with a bold header "
-    "(**Topic Name**) followed by bullet points underneath. Merge related topics and remove redundancy. "
+    "You are a Discord channel summarizer. Given multiple time-period summaries from "
+    "the same channel, produce one unified summary organized by discussion topic. "
+    "Format each topic with a bold header (**Topic Name**) followed by bullet points "
+    "underneath. Merge related topics and remove redundancy.\n\n"
+    "Preserve any verbatim @here/@everyone messages from the input summaries -- "
+    "these are marked as important and must not be dropped.\n"
+    "Prioritize topics that were marked as popular or had high engagement.\n\n"
     "Do not extract action items or decisions as separate sections."
 )
 
@@ -88,4 +104,16 @@ async def summarize_channel(
             processed.append(result)
 
     logger.info(f"Preprocessed: {len(processed)}/{len(raw_messages)} messages kept")
+
+    # Phase 4: Compute reply counts and set popularity flags (D-04)
+    reply_counts: Counter[int] = Counter()
+    for msg in processed:
+        if msg.reply_to_id:
+            reply_counts[msg.reply_to_id] += 1
+
+    for msg in processed:
+        msg.reply_count = reply_counts.get(msg.message_id, 0)
+        if msg.reply_count >= 5 or msg.reaction_count >= 5:
+            msg.is_popular = True
+
     return await summarize_messages(provider, processed, max_context_tokens)
