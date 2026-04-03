@@ -7,6 +7,29 @@ import discord
 from bot.models import ProcessedMessage
 
 
+def classify_attachment(attachment: discord.Attachment) -> str:
+    """Classify attachment type from MIME content_type prefix."""
+    ct = attachment.content_type or ""
+    if ct.startswith("image/"):
+        return "image"
+    elif ct.startswith("video/"):
+        return "video"
+    elif ct.startswith("audio/"):
+        return "audio"
+    return "file"
+
+
+def extract_embed_text(embed: discord.Embed) -> str | None:
+    """Extract title and description from an embed, truncating long descriptions."""
+    parts = []
+    if embed.title:
+        parts.append(embed.title)
+    if embed.description:
+        desc = embed.description[:200] if len(embed.description) > 200 else embed.description
+        parts.append(desc)
+    return " - ".join(parts) if parts else None
+
+
 def preprocess_message(
     message: discord.Message, guild: discord.Guild
 ) -> ProcessedMessage | None:
@@ -43,9 +66,24 @@ def preprocess_message(
     # D-04: Replace custom emoji markup, keep the name
     content = re.sub(r"<a?:(\w+):\d+>", r":\1:", content)
 
-    # D-04: Attachment marker
-    if message.attachments:
-        content += " [attachment]" if content else "[attachment]"
+    # D-05: Typed attachment markers
+    for att in message.attachments:
+        att_type = classify_attachment(att)
+        marker = f"[{att_type}: {att.filename}]"
+        content = f"{content} {marker}" if content else marker
+
+    # D-07: Extract embed text (limit to first 3)
+    embeds_text = []
+    for embed in message.embeds[:3]:
+        text = extract_embed_text(embed)
+        if text:
+            embeds_text.append(text)
+
+    # D-03: Importance flag
+    is_important = message.mention_everyone
+
+    # D-06: Reaction count
+    reaction_count = sum(r.count for r in message.reactions)
 
     # D-06: Links preserved (naturally present in content)
 
@@ -53,9 +91,14 @@ def preprocess_message(
     if not content:
         return None
 
-    # D-07: Author display name
+    # D-07: Author display name, enriched with Phase 4 metadata
     return ProcessedMessage(
         author=message.author.display_name,
         content=content,
         timestamp=message.created_at,
+        message_id=message.id,
+        reply_to_id=message.reference.message_id if message.reference else None,
+        is_important=is_important,
+        reaction_count=reaction_count,
+        embeds_text=embeds_text,
     )

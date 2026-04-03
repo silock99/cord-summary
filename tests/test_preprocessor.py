@@ -16,10 +16,15 @@ def _make_message(
     msg_type=discord.MessageType.default,
     display_name="Alice",
     author_id=100,
+    message_id=12345,
     mentions=None,
     channel_mentions=None,
     role_mentions=None,
     attachments=None,
+    reactions=None,
+    embeds=None,
+    reference=None,
+    mention_everyone=False,
     created_at=None,
 ):
     """Build a mock discord.Message for testing."""
@@ -28,12 +33,17 @@ def _make_message(
     msg.author.bot = bot
     msg.author.display_name = display_name
     msg.author.id = author_id
+    msg.id = message_id
     msg.type = msg_type
     msg.content = content
     msg.mentions = mentions or []
     msg.channel_mentions = channel_mentions or []
     msg.role_mentions = role_mentions or []
     msg.attachments = attachments or []
+    msg.reactions = reactions or []
+    msg.embeds = embeds or []
+    msg.mention_everyone = mention_everyone
+    msg.reference = reference
     msg.created_at = created_at or datetime(2026, 3, 27, 12, 0, 0, tzinfo=timezone.utc)
     return msg
 
@@ -118,12 +128,14 @@ def test_role_mention_resolution():
 
 
 def test_attachment_marker():
-    attachment = MagicMock()
+    attachment = MagicMock(spec=discord.Attachment)
+    attachment.filename = "doc.pdf"
+    attachment.content_type = "application/pdf"
     msg = _make_message(content="check this", attachments=[attachment])
     guild = _make_guild()
     result = preprocess_message(msg, guild)
     assert result is not None
-    assert result.content == "check this [attachment]"
+    assert "[file: doc.pdf]" in result.content
 
 
 def test_custom_emoji_cleanup():
@@ -157,3 +169,25 @@ def test_links_preserved():
     result = preprocess_message(msg, guild)
     assert result is not None
     assert "https://example.com/path?q=1" in result.content
+
+
+# Phase 4: Basic smoke tests for new enriched metadata fields
+def test_new_fields_have_defaults():
+    """ProcessedMessage constructed with only author/content/timestamp still works."""
+    pm = ProcessedMessage(author="Test", content="hello", timestamp=datetime(2026, 1, 1, tzinfo=timezone.utc))
+    assert pm.message_id == 0
+    assert pm.reply_to_id is None
+    assert pm.is_important is False
+    assert pm.is_popular is False
+    assert pm.reaction_count == 0
+    assert pm.reply_count == 0
+    assert pm.embeds_text == []
+
+
+def test_message_id_extracted():
+    """preprocess_message sets message_id from message.id."""
+    msg = _make_message(content="test", message_id=99999)
+    guild = _make_guild()
+    result = preprocess_message(msg, guild)
+    assert result is not None
+    assert result.message_id == 99999
