@@ -37,16 +37,28 @@ TIMERANGE_LABELS = {
 def register_summary_command(bot) -> None:
     """Register the /summary slash command on the bot's command tree."""
 
+    async def channel_autocomplete(
+        interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[str]]:
+        """Only show channels from the allowlist."""
+        choices = []
+        for cid in bot.settings.allowed_channel_ids:
+            ch = interaction.guild.get_channel(cid)
+            if ch and current.lower() in ch.name.lower():
+                choices.append(app_commands.Choice(name=f"#{ch.name}", value=str(cid)))
+        return choices[:25]
+
     @bot.tree.command(name="summary", description="Summarize recent channel activity")
     @app_commands.describe(
         timerange="Time period to summarize",
         channel="Channel to summarize (defaults to current channel)",
     )
     @app_commands.choices(timerange=TIMERANGE_CHOICES)
+    @app_commands.autocomplete(channel=channel_autocomplete)
     async def summary(
         interaction: discord.Interaction,
         timerange: int = 240,
-        channel: discord.TextChannel | None = None,
+        channel: str | None = None,
     ) -> None:
         # Step 0 - Cooldown check
         cooldown = bot.settings.summary_cooldown_seconds
@@ -75,7 +87,13 @@ def register_summary_command(bot) -> None:
         await interaction.response.defer(ephemeral=True)
 
         # Step 2 - Resolve target channel (per D-09)
-        target = channel or interaction.channel
+        if channel:
+            target = interaction.guild.get_channel(int(channel))
+            if not target:
+                await interaction.edit_original_response(content="Channel not found.")
+                return
+        else:
+            target = interaction.channel
 
         # Step 3 - Validate allowlist (per D-08, D-10)
         if not bot.settings.allowed_channel_ids:
