@@ -191,3 +191,268 @@ def test_message_id_extracted():
     result = preprocess_message(msg, guild)
     assert result is not None
     assert result.message_id == 99999
+
+
+# --- Mock helpers for Phase 4 enriched metadata ---
+
+def _make_attachment(filename="file.txt", content_type="application/octet-stream"):
+    """Create a mock discord.Attachment."""
+    att = MagicMock(spec=discord.Attachment)
+    att.filename = filename
+    att.content_type = content_type
+    return att
+
+
+def _make_embed(title=None, description=None):
+    """Create a mock discord.Embed."""
+    embed = MagicMock(spec=discord.Embed)
+    embed.title = title
+    embed.description = description
+    return embed
+
+
+def _make_reaction(count=1):
+    """Create a mock discord.Reaction."""
+    r = MagicMock(spec=discord.Reaction)
+    r.count = count
+    return r
+
+
+def _make_reference(message_id=None):
+    """Create a mock discord.MessageReference."""
+    ref = MagicMock(spec=discord.MessageReference)
+    ref.message_id = message_id
+    return ref
+
+
+# --- Phase 4: Typed attachment tests ---
+
+def test_attachment_typed_image():
+    """Image attachment produces '[image: photo.png]' in content."""
+    att = _make_attachment("photo.png", "image/png")
+    msg = _make_message(content="look", attachments=[att])
+    guild = _make_guild()
+    result = preprocess_message(msg, guild)
+    assert result is not None
+    assert "[image: photo.png]" in result.content
+
+
+def test_attachment_typed_video():
+    """Video attachment produces '[video: clip.mp4]' in content."""
+    att = _make_attachment("clip.mp4", "video/mp4")
+    msg = _make_message(content="watch", attachments=[att])
+    guild = _make_guild()
+    result = preprocess_message(msg, guild)
+    assert result is not None
+    assert "[video: clip.mp4]" in result.content
+
+
+def test_attachment_typed_audio():
+    """Audio attachment produces '[audio: song.mp3]' in content."""
+    att = _make_attachment("song.mp3", "audio/mpeg")
+    msg = _make_message(content="listen", attachments=[att])
+    guild = _make_guild()
+    result = preprocess_message(msg, guild)
+    assert result is not None
+    assert "[audio: song.mp3]" in result.content
+
+
+def test_attachment_no_content_type():
+    """None content_type produces '[file: unknown.bin]' in content."""
+    att = _make_attachment("unknown.bin", None)
+    msg = _make_message(content="here", attachments=[att])
+    guild = _make_guild()
+    result = preprocess_message(msg, guild)
+    assert result is not None
+    assert "[file: unknown.bin]" in result.content
+
+
+# --- Phase 4: Reaction count tests ---
+
+def test_reaction_count_extracted():
+    """Message with multiple reactions sums counts correctly."""
+    reactions = [_make_reaction(2), _make_reaction(3), _make_reaction(1)]
+    msg = _make_message(content="popular", reactions=reactions)
+    guild = _make_guild()
+    result = preprocess_message(msg, guild)
+    assert result is not None
+    assert result.reaction_count == 6
+
+
+def test_no_reactions_zero_count():
+    """Message with no reactions has reaction_count=0."""
+    msg = _make_message(content="quiet")
+    guild = _make_guild()
+    result = preprocess_message(msg, guild)
+    assert result is not None
+    assert result.reaction_count == 0
+
+
+# --- Phase 4: Importance flag tests ---
+
+def test_mention_everyone_sets_important():
+    """Message with mention_everyone=True sets is_important=True."""
+    msg = _make_message(content="@everyone wake up", mention_everyone=True)
+    guild = _make_guild()
+    result = preprocess_message(msg, guild)
+    assert result is not None
+    assert result.is_important is True
+
+
+def test_normal_message_not_important():
+    """Default message has is_important=False."""
+    msg = _make_message(content="just chatting")
+    guild = _make_guild()
+    result = preprocess_message(msg, guild)
+    assert result is not None
+    assert result.is_important is False
+
+
+# --- Phase 4: Reply reference tests ---
+
+def test_reply_reference_extracted():
+    """Message with reference.message_id=999 sets reply_to_id=999."""
+    ref = _make_reference(999)
+    msg = _make_message(content="replying to you", reference=ref)
+    guild = _make_guild()
+    result = preprocess_message(msg, guild)
+    assert result is not None
+    assert result.reply_to_id == 999
+
+
+def test_no_reference_returns_none():
+    """Message without reference sets reply_to_id=None."""
+    msg = _make_message(content="standalone")
+    guild = _make_guild()
+    result = preprocess_message(msg, guild)
+    assert result is not None
+    assert result.reply_to_id is None
+
+
+# --- Phase 4: Embed extraction tests ---
+
+def test_embed_title_and_description():
+    """Embed with title and description produces 'Title - Desc'."""
+    embed = _make_embed("Title", "Desc")
+    msg = _make_message(content="link", embeds=[embed])
+    guild = _make_guild()
+    result = preprocess_message(msg, guild)
+    assert result is not None
+    assert result.embeds_text == ["Title - Desc"]
+
+
+def test_embed_title_only():
+    """Embed with only title produces just the title."""
+    embed = _make_embed("Title", None)
+    msg = _make_message(content="link", embeds=[embed])
+    guild = _make_guild()
+    result = preprocess_message(msg, guild)
+    assert result is not None
+    assert result.embeds_text == ["Title"]
+
+
+def test_embed_description_only():
+    """Embed with only description produces just the description."""
+    embed = _make_embed(None, "Some description")
+    msg = _make_message(content="link", embeds=[embed])
+    guild = _make_guild()
+    result = preprocess_message(msg, guild)
+    assert result is not None
+    assert result.embeds_text == ["Some description"]
+
+
+def test_embed_limit_three():
+    """Only first 3 embeds are extracted from a message with 5."""
+    embeds = [_make_embed(f"E{i}", f"D{i}") for i in range(5)]
+    msg = _make_message(content="many links", embeds=embeds)
+    guild = _make_guild()
+    result = preprocess_message(msg, guild)
+    assert result is not None
+    assert len(result.embeds_text) == 3
+
+
+def test_embed_description_truncated():
+    """Embed with 300-char description is truncated to 200."""
+    long_desc = "x" * 300
+    embed = _make_embed("T", long_desc)
+    msg = _make_message(content="link", embeds=[embed])
+    guild = _make_guild()
+    result = preprocess_message(msg, guild)
+    assert result is not None
+    assert len(result.embeds_text) == 1
+    # Should contain truncated description (200 chars)
+    assert long_desc[:200] in result.embeds_text[0]
+    assert long_desc[:201] not in result.embeds_text[0]
+
+
+def test_embed_empty_skipped():
+    """Embed with no title and no description is not included."""
+    embed = _make_embed(None, None)
+    msg = _make_message(content="link", embeds=[embed])
+    guild = _make_guild()
+    result = preprocess_message(msg, guild)
+    assert result is not None
+    assert result.embeds_text == []
+
+
+# --- Phase 4: message_id tests ---
+
+def test_message_id_set():
+    """Returned ProcessedMessage has message_id matching message.id."""
+    msg = _make_message(content="test", message_id=42)
+    guild = _make_guild()
+    result = preprocess_message(msg, guild)
+    assert result is not None
+    assert result.message_id == 42
+
+
+# --- Phase 4: to_line() marker tests ---
+
+def test_to_line_important_marker():
+    """to_line() includes [IMPORTANT] when is_important is True."""
+    pm = ProcessedMessage(
+        author="Alice", content="announcement",
+        timestamp=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        is_important=True,
+    )
+    assert "[IMPORTANT]" in pm.to_line()
+
+
+def test_to_line_popular_marker():
+    """to_line() includes [POPULAR] when is_popular is True."""
+    pm = ProcessedMessage(
+        author="Alice", content="hot take",
+        timestamp=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        is_popular=True,
+    )
+    assert "[POPULAR]" in pm.to_line()
+
+
+def test_to_line_reaction_count():
+    """to_line() includes reaction count when >= 5."""
+    pm = ProcessedMessage(
+        author="Alice", content="viral",
+        timestamp=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        reaction_count=7,
+    )
+    assert "[7 reactions]" in pm.to_line()
+
+
+def test_to_line_no_reaction_count_below_threshold():
+    """to_line() does not include reaction count when < 5."""
+    pm = ProcessedMessage(
+        author="Alice", content="quiet",
+        timestamp=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        reaction_count=3,
+    )
+    assert "reactions" not in pm.to_line()
+
+
+def test_to_line_embeds():
+    """to_line() includes embed text in parentheses."""
+    pm = ProcessedMessage(
+        author="Alice", content="link",
+        timestamp=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        embeds_text=["Title - Desc"],
+    )
+    assert "(Title - Desc)" in pm.to_line()
