@@ -15,6 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 1: Foundation and Pipeline** - Bot connects to Discord, fetches messages with pagination, and produces AI-generated summaries via pluggable backend
 - [ ] **Phase 2: On-Demand Summarization** - Users can run `/summary` and get formatted, topic-grouped bullet-point recaps posted to a dedicated channel
 - [ ] **Phase 3: Scheduling and Delivery** - Bot auto-posts overnight summaries at 9am and supports DM and thread delivery options
+- [ ] **Phase 4: Summary Quality Improvements** - Enrich LLM input with reply chains, importance signals, typed attachments, embed content, and signal-aware prompts
 
 ## Phase Details
 
@@ -66,13 +67,31 @@ Plans:
 - [x] 03-01-PLAN.md — Overnight scheduler with multi-channel orchestration and optional thread delivery
 - [x] 03-02-PLAN.md — DM toggle command, subscriber persistence, and DM delivery wiring
 
+### Phase 4: Summary Quality Improvements
+**Goal:** Enrich the data pipeline feeding the LLM with reply chain context, @here/@everyone importance flags, reaction-based popularity signals, typed attachment metadata, embed content extraction, and signal-aware system prompts -- producing more accurate and context-rich summaries
+**Depends on:** Phase 3
+**Requirements**: QUAL-01, QUAL-02, QUAL-03, QUAL-04, QUAL-05, QUAL-06, QUAL-07
+**Success Criteria** (what must be TRUE):
+  1. Reply chains are formatted with indentation in LLM input, giving the model conversational structure
+  2. Messages with @here/@everyone are flagged [IMPORTANT] and the LLM must include them verbatim
+  3. Messages with 5+ reactions or 5+ replies are flagged [POPULAR] and prioritized
+  4. Attachments show as typed markers ([image: file.png], [video: clip.mp4]) instead of generic [attachment]
+  5. Embed content (title + description) from user messages is extracted and included in LLM input
+  6. System prompts explicitly instruct the LLM on every signal marker
+**Plans:** 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Extend ProcessedMessage data model and enrich preprocessor with all new metadata extraction
+- [ ] 04-02-PLAN.md — Reply-chain formatting, popularity computation, and signal-aware system prompts
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation and Pipeline | 0/3 | Planning complete | - |
 | 2. On-Demand Summarization | 0/2 | Planning complete | - |
 | 3. Scheduling and Delivery | 0/2 | Planning complete | - |
+| 4. Summary Quality Improvements | 0/2 | Planning complete | - |
