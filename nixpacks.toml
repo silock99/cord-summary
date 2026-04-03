@@ -1,5 +1,5 @@
 [phases.build]
-cmds = ["uv sync --reinstall"]
+cmds = ["uv sync --no-install-project"]
 
 [start]
-cmd = "uv run python -m bot"
+cmd = "PYTHONPATH=/app/src uv run --no-project python -m bot"
