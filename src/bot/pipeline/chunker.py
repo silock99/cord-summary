@@ -54,7 +54,12 @@ def _render_replies(
     depth: int,
     max_depth: int = 2,
 ) -> None:
-    """Recursively render reply chains with indentation, capped at max_depth."""
+    """Recursively render reply chains with indentation capped at max_depth.
+
+    Stops at depth 50 to prevent stack overflow on adversarial reply chains.
+    """
+    if depth > 50:
+        return
     indent = "  " * min(depth, max_depth)
     for reply in children.get(parent.message_id, []):
         lines.append(f"{indent}> {reply.to_line()}")
@@ -63,6 +68,9 @@ def _render_replies(
 
 def format_chunk_for_llm(messages: list[ProcessedMessage]) -> str:
     """Format messages with reply-chain indentation for LLM input (D-01)."""
+    if not any(m.reply_to_id for m in messages):
+        return "\n".join(m.to_line() for m in messages)
+
     # Build parent-child index
     by_id: dict[int, ProcessedMessage] = {
         m.message_id: m for m in messages if m.message_id
