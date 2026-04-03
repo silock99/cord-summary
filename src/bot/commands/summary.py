@@ -14,6 +14,9 @@ from bot.summarizer import summarize_messages
 
 logger = logging.getLogger(__name__)
 
+# Per-user cooldown tracking: {user_id: last_usage_datetime}
+_cooldowns: dict[int, datetime] = {}
+
 TIMERANGE_CHOICES = [
     app_commands.Choice(name="Last 30 minutes", value=30),
     app_commands.Choice(name="Last 1 hour", value=60),
@@ -45,6 +48,29 @@ def register_summary_command(bot) -> None:
         timerange: int = 240,
         channel: discord.TextChannel | None = None,
     ) -> None:
+        # Step 0 - Cooldown check
+        cooldown = bot.settings.summary_cooldown_seconds
+        if cooldown > 0:
+            user_id = interaction.user.id
+            now = datetime.now(timezone.utc)
+            last_used = _cooldowns.get(user_id)
+            if last_used and (now - last_used).total_seconds() < cooldown:
+                remaining = cooldown - int((now - last_used).total_seconds())
+                minutes, seconds = divmod(remaining, 60)
+                hours, minutes = divmod(minutes, 60)
+                parts = []
+                if hours:
+                    parts.append(f"{hours}h")
+                if minutes:
+                    parts.append(f"{minutes}m")
+                if seconds and not hours:
+                    parts.append(f"{seconds}s")
+                await interaction.response.send_message(
+                    f"You can use `/summary` again in {' '.join(parts)}.",
+                    ephemeral=True,
+                )
+                return
+
         # Step 1 - Defer immediately (per D-04)
         await interaction.response.defer(ephemeral=True)
 
@@ -99,6 +125,10 @@ def register_summary_command(bot) -> None:
         await interaction.edit_original_response(embed=embeds[0])
         for extra in embeds[1:]:
             await interaction.followup.send(embed=extra, ephemeral=True)
+
+        # Record cooldown after successful summary
+        if bot.settings.summary_cooldown_seconds > 0:
+            _cooldowns[interaction.user.id] = datetime.now(timezone.utc)
 
         logger.info(
             f"/summary by {interaction.user} in #{target.name} "
