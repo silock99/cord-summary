@@ -1,5 +1,6 @@
 """Message chunking for two-pass summarization (D-09)."""
 
+from collections import defaultdict
 from datetime import timedelta
 
 from bot.models import ProcessedMessage
@@ -46,6 +47,39 @@ def chunk_by_time_window(
     return chunks
 
 
+def _render_replies(
+    parent: ProcessedMessage,
+    children: dict[int, list[ProcessedMessage]],
+    lines: list[str],
+    depth: int,
+    max_depth: int = 2,
+) -> None:
+    """Recursively render reply chains with indentation, capped at max_depth."""
+    indent = "  " * min(depth, max_depth)
+    for reply in children.get(parent.message_id, []):
+        lines.append(f"{indent}> {reply.to_line()}")
+        _render_replies(reply, children, lines, depth + 1, max_depth)
+
+
 def format_chunk_for_llm(messages: list[ProcessedMessage]) -> str:
-    """Format a list of ProcessedMessages into a single text block for LLM input."""
-    return "\n".join(msg.to_line() for msg in messages)
+    """Format messages with reply-chain indentation for LLM input (D-01)."""
+    # Build parent-child index
+    by_id: dict[int, ProcessedMessage] = {
+        m.message_id: m for m in messages if m.message_id
+    }
+    children: dict[int, list[ProcessedMessage]] = defaultdict(list)
+    roots: list[ProcessedMessage] = []
+
+    for msg in messages:
+        if msg.reply_to_id and msg.reply_to_id in by_id:
+            children[msg.reply_to_id].append(msg)
+        else:
+            roots.append(msg)
+
+    lines: list[str] = []
+    for msg in roots:
+        lines.append(msg.to_line())
+        if msg.message_id:
+            _render_replies(msg, children, lines, depth=1)
+
+    return "\n".join(lines)
