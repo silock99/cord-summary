@@ -1,4 +1,4 @@
-"""Automated overnight summary scheduler (SCHED-01, SCHED-02)."""
+"""Automated summary scheduler: overnight at 9am + hourly recaps."""
 
 import logging
 from datetime import datetime, time, timedelta
@@ -24,11 +24,11 @@ def get_overnight_window(tz: ZoneInfo) -> tuple[datetime, datetime]:
 
 
 class OvernightScheduler:
-    """Manages the daily 9am overnight summary task.
+    """Manages the daily 9am overnight summary and hourly recap tasks.
 
     Uses discord.ext.tasks.loop with zoneinfo for DST-correct scheduling (SCHED-02).
-    Iterates allowed channels sequentially (D-11), skips quiet channels (D-03),
-    and continues past failures (D-12).
+    Iterates allowed channels sequentially, skips quiet channels,
+    and continues past failures.
     """
 
     def __init__(self, bot) -> None:
@@ -37,25 +37,31 @@ class OvernightScheduler:
         self.tz = tz
         schedule_time = time(hour=9, minute=0, tzinfo=tz)
 
-        # Create the task loop dynamically with the configured timezone
-        self._task = tasks.loop(time=schedule_time)(self._post_overnight_summary)
-        self._task.before_loop(self._wait_ready)
-        self._task.error(self._on_error)
+        # Daily 9am overnight summary
+        self._overnight_task = tasks.loop(time=schedule_time)(self._post_overnight_summary)
+        self._overnight_task.before_loop(self._wait_ready)
+        self._overnight_task.error(self._on_overnight_error)
+
+        # Hourly recap
+        self._hourly_task = tasks.loop(hours=1)(self._post_hourly_summary)
+        self._hourly_task.before_loop(self._wait_ready)
+        self._hourly_task.error(self._on_hourly_error)
 
     async def _wait_ready(self) -> None:
-        """Wait until bot is connected before first iteration (Pitfall 2)."""
+        """Wait until bot is connected before first iteration."""
         await self.bot.wait_until_ready()
 
-    async def _on_error(self, error: Exception) -> None:
-        """Log task errors without crashing the loop."""
+    async def _on_overnight_error(self, error: Exception) -> None:
         logger.error(f"Overnight summary task failed: {error}", exc_info=error)
 
-    async def _post_overnight_summary(self) -> None:
-        """Main scheduled job: summarize all allowed channels and post to #summaries."""
-        logger.info("Starting overnight summary generation")
+    async def _on_hourly_error(self, error: Exception) -> None:
+        logger.error(f"Hourly summary task failed: {error}", exc_info=error)
 
-        after, before = get_overnight_window(self.tz)
-        logger.info(f"Overnight window: {after} to {before}")
+    async def _post_summary(
+        self, label: str, after: datetime, before: datetime | None = None
+    ) -> None:
+        """Summarize all allowed channels and post to the summary channel."""
+        logger.info(f"Starting {label} summary generation")
 
         guild = self.bot.get_guild(self.bot.settings.guild_id)
         if guild is None:
@@ -67,17 +73,15 @@ class OvernightScheduler:
             logger.error(f"Summary channel {self.bot.settings.summary_channel_id} not found")
             return
 
-        # Determine posting target: thread or channel (D-08, D-09)
+        # Determine posting target: thread or channel
         if self.bot.settings.use_threads:
             now = datetime.now(self.tz)
             target = await create_summary_thread(summary_channel, now)
         else:
             target = summary_channel
 
-        all_embeds: list[discord.Embed] = []
         errors: list[str] = []
 
-        # Sequential channel iteration (D-01, D-11)
         for channel_id in self.bot.settings.allowed_channel_ids:
             channel = self.bot.get_channel(channel_id)
             if channel is None:
@@ -94,23 +98,16 @@ class OvernightScheduler:
                     self.bot.settings.max_context_tokens,
                 )
 
-                # Check quiet threshold (D-03): skip silently
                 if summary_text == "No messages to summarize.":
-                    logger.info(f"#{channel.name}: no messages in overnight window, skipping")
+                    logger.info(f"#{channel.name}: no messages in {label} window, skipping")
                     continue
 
-                embeds = build_summary_embeds(
-                    summary_text, channel.name, "Overnight (10pm\u20139am)"
-                )
-                all_embeds.extend(embeds)
-
-                # Post per-channel embeds (D-10)
+                embeds = build_summary_embeds(summary_text, channel.name, label)
                 for embed in embeds:
-                    embed.set_footer(text="Scheduled overnight summary | 10pm\u20139am")
+                    embed.set_footer(text=f"Scheduled {label} summary")
                     await target.send(embed=embed)
 
             except SummaryError as e:
-                # D-12: continue with remaining channels, log error
                 error_msg = f"Failed to summarize #{channel.name}: {e}"
                 errors.append(error_msg)
                 logger.warning(error_msg)
@@ -121,30 +118,33 @@ class OvernightScheduler:
                 logger.error(error_msg, exc_info=e)
                 continue
 
-        # Post error summary if any channels failed (D-12)
         if errors:
             error_text = "\n".join(f"- {e}" for e in errors)
             error_embed = discord.Embed(
-                title="Overnight Summary Errors",
+                title=f"{label} Summary Errors",
                 description=error_text,
                 color=0xFF0000,
             )
             await target.send(embed=error_embed)
 
-        # Send DMs to opted-in subscribers (D-06, D-07)
-        if all_embeds and hasattr(self.bot, 'dm_manager') and self.bot.dm_manager is not None:
-            await self.bot.dm_manager.send_dm_summaries(self.bot, all_embeds)
+        logger.info(f"{label} summary complete, {len(errors)} error(s)")
 
-        posted_count = len(all_embeds)
-        logger.info(
-            f"Overnight summary complete: {posted_count} embed(s) posted, "
-            f"{len(errors)} error(s)"
-        )
+    async def _post_overnight_summary(self) -> None:
+        after, before = get_overnight_window(self.tz)
+        logger.info(f"Overnight window: {after} to {before}")
+        await self._post_summary("Overnight (10pm–9am)", after, before)
+
+    async def _post_hourly_summary(self) -> None:
+        now = datetime.now(self.tz)
+        after = now - timedelta(hours=1)
+        await self._post_summary("Hourly", after)
 
     def start(self) -> None:
-        """Start the scheduled task loop."""
-        self._task.start()
+        """Start the scheduled task loops."""
+        self._overnight_task.start()
+        self._hourly_task.start()
 
     def cancel(self) -> None:
-        """Stop the scheduled task loop."""
-        self._task.cancel()
+        """Stop the scheduled task loops."""
+        self._overnight_task.cancel()
+        self._hourly_task.cancel()

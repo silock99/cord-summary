@@ -4,9 +4,7 @@ import discord
 from discord.ext import commands
 
 from bot.commands.summary import register_summary_command
-from bot.commands.summary_dm import register_summary_dm_command
 from bot.config import Settings
-from bot.delivery.dm_manager import DMManager
 from bot.providers.base import SummaryProvider
 from bot.scheduling.overnight import OvernightScheduler
 
@@ -22,25 +20,19 @@ class SummaryBot(commands.Bot):
         self.settings = settings
         self.provider: SummaryProvider | None = None
         self.scheduler: OvernightScheduler | None = None
-        self.dm_manager: DMManager | None = None
 
     async def setup_hook(self) -> None:
         """Register commands and sync to the configured guild (INFRA-03). Fires once before connecting."""
         register_summary_command(self)
-        register_summary_dm_command(self)
         guild = discord.Object(id=self.settings.guild_id)
         self.tree.copy_global_to(guild=guild)
         synced = await self.tree.sync(guild=guild)
         logger.info(f"Synced {len(synced)} command(s) to guild {self.settings.guild_id}")
 
-        # Initialize DM subscriber manager (OUT-03, D-05)
-        self.dm_manager = DMManager()
-        logger.info("DM subscriber manager initialized")
-
-        # Start overnight summary scheduler (SCHED-01)
+        # Start scheduled summary tasks (overnight + hourly)
         self.scheduler = OvernightScheduler(self)
         self.scheduler.start()
-        logger.info("Overnight summary scheduler started")
+        logger.info("Summary schedulers started")
 
     async def on_ready(self) -> None:
         logger.info(f"Bot connected as {self.user} (ID: {self.user.id})")
