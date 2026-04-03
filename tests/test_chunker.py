@@ -11,13 +11,20 @@ from bot.pipeline.chunker import (
 )
 
 
-def _msg(content: str, minutes_offset: int = 0) -> ProcessedMessage:
+def _msg(content: str, minutes_offset: int = 0, *, message_id: int = 0,
+         reply_to_id: int | None = None, is_important: bool = False,
+         is_popular: bool = False, reaction_count: int = 0) -> ProcessedMessage:
     """Create a ProcessedMessage at a given minute offset from a base time."""
     base = datetime(2026, 3, 27, 10, 0, 0, tzinfo=timezone.utc)
     return ProcessedMessage(
         author="User",
         content=content,
         timestamp=base + timedelta(minutes=minutes_offset),
+        message_id=message_id,
+        reply_to_id=reply_to_id,
+        is_important=is_important,
+        is_popular=is_popular,
+        reaction_count=reaction_count,
     )
 
 
@@ -77,3 +84,65 @@ def test_format_chunk_for_llm():
     ]
     result = format_chunk_for_llm(msgs)
     assert result == "Alice: hello\nBob: world"
+
+
+def test_reply_indentation():
+    """Reply to a message in the same chunk renders indented with '  > ' prefix."""
+    parent = _msg("parent message", 0, message_id=1)
+    reply = _msg("reply message", 1, message_id=2, reply_to_id=1)
+    result = format_chunk_for_llm([parent, reply])
+    assert result == "User: parent message\n  > User: reply message"
+
+
+def test_reply_depth_cap_at_two():
+    """Reply chains deeper than depth 2 flatten to depth 2 indentation."""
+    a = _msg("msg A", 0, message_id=1)
+    b = _msg("msg B", 1, message_id=2, reply_to_id=1)
+    c = _msg("msg C", 2, message_id=3, reply_to_id=2)
+    d = _msg("msg D", 3, message_id=4, reply_to_id=3)
+    result = format_chunk_for_llm([a, b, c, d])
+    lines = result.split("\n")
+    assert lines[0] == "User: msg A"
+    assert lines[1] == "  > User: msg B"       # depth 1
+    assert lines[2] == "    > User: msg C"      # depth 2
+    assert lines[3] == "    > User: msg D"      # depth 3 capped at 2
+
+
+def test_reply_parent_missing():
+    """Reply to a message not in the chunk renders as root (no indentation)."""
+    reply = _msg("orphan reply", 0, message_id=5, reply_to_id=999)
+    result = format_chunk_for_llm([reply])
+    assert result == "User: orphan reply"
+
+
+def test_mixed_roots_and_replies():
+    """Mixed roots and replies: reply appears indented after parent, other roots after."""
+    root1 = _msg("first root", 0, message_id=1)
+    reply1 = _msg("reply to first", 1, message_id=2, reply_to_id=1)
+    root2 = _msg("second root", 2, message_id=3)
+    result = format_chunk_for_llm([root1, reply1, root2])
+    lines = result.split("\n")
+    assert lines[0] == "User: first root"
+    assert lines[1] == "  > User: reply to first"
+    assert lines[2] == "User: second root"
+
+
+def test_important_marker_in_formatted_output():
+    """Message with is_important=True includes [IMPORTANT] in output."""
+    msg = _msg("announcement", 0, message_id=1, is_important=True)
+    result = format_chunk_for_llm([msg])
+    assert "[IMPORTANT]" in result
+
+
+def test_popular_marker_in_formatted_output():
+    """Message with is_popular=True includes [POPULAR] in output."""
+    msg = _msg("hot take", 0, message_id=1, is_popular=True)
+    result = format_chunk_for_llm([msg])
+    assert "[POPULAR]" in result
+
+
+def test_reaction_count_in_formatted_output():
+    """Message with reaction_count=8 includes [8 reactions] in output."""
+    msg = _msg("reacted msg", 0, message_id=1, reaction_count=8)
+    result = format_chunk_for_llm([msg])
+    assert "[8 reactions]" in result
