@@ -81,7 +81,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Extend ProcessedMessage data model and enrich preprocessor with all new metadata extraction
+- [x] 04-01-PLAN.md — Extend ProcessedMessage data model and enrich preprocessor with all new metadata extraction
 - [ ] 04-02-PLAN.md — Reply-chain formatting, popularity computation, and signal-aware system prompts
 
 ## Progress
@@ -94,4 +94,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 1. Foundation and Pipeline | 0/3 | Planning complete | - |
 | 2. On-Demand Summarization | 0/2 | Planning complete | - |
 | 3. Scheduling and Delivery | 0/2 | Planning complete | - |
-| 4. Summary Quality Improvements | 0/2 | Planning complete | - |
+| 4. Summary Quality Improvements | 1/2 | Executing | - |
