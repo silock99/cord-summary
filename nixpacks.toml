@@ -1,5 +1,5 @@
 [phases.build]
-cmds = ["uv sync --reinstall-package discord-summary-bot"]
+cmds = ["uv sync --reinstall"]
 
 [start]
-cmd = "python -m bot"
+cmd = "uv run python -m bot"
