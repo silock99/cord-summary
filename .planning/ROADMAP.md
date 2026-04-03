@@ -82,7 +82,7 @@ Plans:
 
 Plans:
 - [x] 04-01-PLAN.md — Extend ProcessedMessage data model and enrich preprocessor with all new metadata extraction
-- [ ] 04-02-PLAN.md — Reply-chain formatting, popularity computation, and signal-aware system prompts
+- [x] 04-02-PLAN.md — Reply-chain formatting, popularity computation, and signal-aware system prompts
 
 ## Progress
 

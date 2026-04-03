@@ -46,6 +46,16 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **INFRA-02**: Configuration via environment variables (bot token, channel IDs, timezone, LLM API key)
 - [x] **INFRA-03**: Slash commands are registered and synced on bot startup
 
+### Summary Quality
+
+- [x] **QUAL-01**: Reply chains are formatted with thread-style indentation in LLM input, preserving conversational structure
+- [x] **QUAL-02**: Messages containing @here or @everyone are flagged as important and included verbatim in summaries
+- [x] **QUAL-03**: Popular messages (5+ reactions or 5+ replies) are marked as high-importance in LLM input
+- [x] **QUAL-04**: Attachments are represented with type and filename (e.g., [image: screenshot.png]) instead of generic markers
+- [x] **QUAL-05**: Reaction counts are shown as total count on popular messages (5+ reactions)
+- [x] **QUAL-06**: Discord embed content (title + description) is extracted from user messages and included in LLM input
+- [x] **QUAL-07**: System prompts explicitly instruct the LLM on how to handle every signal marker
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -100,11 +110,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 1 | Complete |
 
+| QUAL-01 | Phase 4 | Complete |
+| QUAL-02 | Phase 4 | Complete |
+| QUAL-03 | Phase 4 | Complete |
+| QUAL-04 | Phase 4 | Complete |
+| QUAL-05 | Phase 4 | Complete |
+| QUAL-06 | Phase 4 | Complete |
+| QUAL-07 | Phase 4 | Complete |
+
 **Coverage:**
-- v1 requirements: 21 total
-- Mapped to phases: 21
+- v1 requirements: 28 total
+- Mapped to phases: 28
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-27*
-*Last updated: 2026-03-27 after roadmap creation*
+*Last updated: 2026-04-03 after Phase 4 completion*
