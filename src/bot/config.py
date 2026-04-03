@@ -47,6 +47,10 @@ class Settings(BaseSettings):
         parts = [p.strip() for p in raw.split(",")]
         return [int(p) for p in parts if p]
 
+    # Overnight schedule
+    overnight_start_hour: int = 22  # 10pm
+    overnight_end_hour: int = 9    # 9am
+
     # Thread delivery (OUT-04, D-08, D-09)
     use_threads: bool = False
 

@@ -15,12 +15,13 @@ from bot.summarizer import summarize_channel
 logger = logging.getLogger(__name__)
 
 
-def get_overnight_window(tz: ZoneInfo) -> tuple[datetime, datetime]:
-    """Return (start=10pm yesterday, end=9am today) in timezone-aware datetimes."""
+def get_overnight_window(tz: ZoneInfo, start_hour: int, end_hour: int) -> tuple[datetime, datetime]:
+    """Return (start, end) for the overnight window in timezone-aware datetimes."""
     now = datetime.now(tz)
-    today_9am = now.replace(hour=9, minute=0, second=0, microsecond=0)
-    yesterday_10pm = today_9am - timedelta(hours=11)
-    return yesterday_10pm, today_9am
+    today_end = now.replace(hour=end_hour, minute=0, second=0, microsecond=0)
+    hours_span = (24 - start_hour + end_hour) % 24
+    window_start = today_end - timedelta(hours=hours_span)
+    return window_start, today_end
 
 
 class OvernightScheduler:
@@ -35,7 +36,9 @@ class OvernightScheduler:
         self.bot = bot
         tz = ZoneInfo(bot.settings.timezone)
         self.tz = tz
-        schedule_time = time(hour=9, minute=0, tzinfo=tz)
+        self.overnight_start = bot.settings.overnight_start_hour
+        self.overnight_end = bot.settings.overnight_end_hour
+        schedule_time = time(hour=self.overnight_end, minute=0, tzinfo=tz)
 
         # Daily 9am overnight summary
         self._overnight_task = tasks.loop(time=schedule_time)(self._post_overnight_summary)
@@ -130,14 +133,21 @@ class OvernightScheduler:
         logger.info(f"{label} summary complete, {len(errors)} error(s)")
 
     async def _post_overnight_summary(self) -> None:
-        after, before = get_overnight_window(self.tz)
+        after, before = get_overnight_window(self.tz, self.overnight_start, self.overnight_end)
+        label = f"Overnight ({self.overnight_start % 12 or 12}{'am' if self.overnight_start < 12 else 'pm'}–{self.overnight_end % 12 or 12}{'am' if self.overnight_end < 12 else 'pm'})"
         logger.info(f"Overnight window: {after} to {before}")
-        await self._post_summary("Overnight (10pm–9am)", after, before)
+        await self._post_summary(label, after, before)
 
     async def _post_hourly_summary(self) -> None:
         now = datetime.now(self.tz)
-        # Skip during overnight window (10pm-9am) — the overnight task covers that
-        if now.hour >= 22 or now.hour < 9:
+        # Skip during overnight window — the overnight task covers that
+        if self.overnight_start > self.overnight_end:
+            # Wraps midnight (e.g. 22-9)
+            in_overnight = now.hour >= self.overnight_start or now.hour < self.overnight_end
+        else:
+            # Same day (e.g. 1-6)
+            in_overnight = self.overnight_start <= now.hour < self.overnight_end
+        if in_overnight:
             logger.info("Skipping hourly summary during overnight window")
             return
         after = now - timedelta(hours=1)
