@@ -10,10 +10,17 @@ class Settings(BaseSettings):
     guild_id: int
     summary_channel_id: int
 
-    # LLM Provider (per D-01, D-02, D-03)
-    openai_api_key: str
+    # LLM Provider selection
+    llm_provider: str = "openai"  # "openai" or "anthropic"
+
+    # OpenAI settings (per D-01, D-02, D-03)
+    openai_api_key: str = ""
     openai_base_url: str = "https://api.openai.com/v1"
     openai_model: str = "gpt-4o-mini"
+
+    # Anthropic settings
+    anthropic_api_key: str = ""
+    anthropic_model: str = "claude-haiku-4-5-20251001"
 
     # Bot behavior
     timezone: str = "America/New_York"
@@ -25,6 +32,9 @@ class Settings(BaseSettings):
     # On-demand summary defaults (D-01, D-11)
     default_summary_minutes: int = 240
     quiet_threshold: int = 5
+
+    # Rate limiting
+    summary_cooldown_seconds: int = 7200  # 2 hours default
 
     # Thread delivery (OUT-04, D-08, D-09)
     use_threads: bool = False

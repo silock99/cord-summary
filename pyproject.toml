@@ -5,9 +5,11 @@ description = "Discord bot that summarizes channel discussions on demand and on 
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "anthropic>=0.86.0",
     "discord.py>=2.7.1",
     "openai>=1.0.0",
     "pydantic-settings>=2.0.0",
+    "tzdata>=2024.1",
 ]
 
 [build-system]
