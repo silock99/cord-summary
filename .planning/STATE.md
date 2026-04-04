@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Users can quickly catch up on what they missed without reading through hundreds of messages
-**Current focus:** Phase 04 — summary-quality-improvements
+**Current focus:** Phase 06 — error-alerting
 
 ## Current Position
 
-Phase: 04
-Plan: Not started
-Status: All plans executed — pending verification
-Last activity: 2026-04-03
+Phase: 06
+Plan: 01 of 2 complete
+Status: Executing
+Last activity: 2026-04-04
 
-Progress: [██████████] 100%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Progress: [██████████] 100%
 | Phase 03 P02 | 2m | 2 tasks | 5 files |
 | Phase 04 P01 | 3m | 2 tasks | 3 files |
 | Phase 04 P02 | 2m | 2 tasks | 3 files |
+| Phase 06 P01 | 1m | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,8 @@ Recent decisions affecting current work:
 - [Phase 04]: Reply indentation capped at depth 2 for LLM readability
 - [Phase 04]: Popularity threshold: 5+ reactions OR 5+ replies per D-04
 - [Phase 04]: Post-preprocessing reply_count computation in summarize_channel
+- [Phase 06]: ADMIN_USER_IDS replaces COOLDOWN_EXEMPT_USER_IDS as single admin identity source
+- [Phase 06]: Empty admin list logs warning and skips DM silently
 
 - [Phase 01]: Used hatchling build backend with src layout for proper package installation
 - [Phase 01]: No unit test for fetcher -- thin wrapper around discord.py async iterator
@@ -101,6 +104,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-03T08:48:45Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-04-04T07:21:54Z
+Stopped at: Completed 06-01-PLAN.md
 Resume file: None
