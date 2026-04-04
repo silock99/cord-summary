@@ -21,6 +21,10 @@ Users can quickly catch up on what they missed without reading through hundreds 
 
 - [ ] Any server member can use the summary commands (no role restrictions)
 
+### Validated (Phase 5)
+
+- [x] Operators can control what language the LLM uses in summaries via configurable blocklist/allowlist — Validated in Phase 5: Summary Language Controls
+
 ### Validated (Phase 3)
 
 - [x] Bot automatically generates and posts an overnight summary (10pm-9am) at 9am daily — Validated in Phase 3: Scheduling and Delivery
@@ -82,4 +86,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-27 after Phase 3 completion — overnight scheduler (9am daily), thread delivery, DM opt-in via /summary-dm, multi-channel support*
+*Last updated: 2026-04-04 after Phase 5 completion — language filter module with blocklist/allowlist for controlling LLM summary language*
