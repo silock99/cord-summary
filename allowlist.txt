@@ -8,3 +8,5 @@
 # master (git branch terminology)
 # slave (database replication terminology)
 # cripple (used in "crippling bug" context)
+low bball iq
+non-ball-knower

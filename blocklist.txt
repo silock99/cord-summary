@@ -9,6 +9,8 @@ spaz
 spastic
 tranny
 faggot
+nigger
+nigga
 fag
 dyke
 cripple
@@ -20,3 +22,10 @@ spic
 gook
 # General insults often used as slurs
 tard
+dumb
+# Topics to exempt from Summary
+Trock
+T-Rock
+CHollins
+Christopher Hollins
+Mr. Hollins
