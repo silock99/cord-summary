@@ -43,6 +43,7 @@ def register_post_summary_command(bot) -> None:
         name="post-summary",
         description="Post a public summary to the summary channel (admin only)",
     )
+    @app_commands.default_permissions(manage_guild=True)
     @app_commands.describe(
         timerange="Time period to summarize",
         channel="Channel to summarize",
