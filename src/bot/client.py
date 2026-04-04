@@ -5,6 +5,7 @@ from discord.ext import commands
 
 from bot.commands.summary import register_summary_command
 from bot.config import Settings
+from bot.language_filter import load_language_config
 from bot.providers.base import SummaryProvider
 from bot.scheduling.overnight import OvernightScheduler
 
@@ -28,6 +29,9 @@ class SummaryBot(commands.Bot):
         self.tree.copy_global_to(guild=guild)
         synced = await self.tree.sync(guild=guild)
         logger.info(f"Synced {len(synced)} command(s) to guild {self.settings.guild_id}")
+
+        # Load language filter configuration (Phase 5: LANG-01, LANG-02)
+        load_language_config()
 
         # Start scheduled summary tasks (overnight + hourly)
         self.scheduler = OvernightScheduler(self)

@@ -1,0 +1,22 @@
+# Default language blocklist for Discord Summary Bot
+# One term per line. Lines starting with # are comments.
+# Operator should customize for their server's needs.
+#
+# Common slurs and insults
+retard
+retarded
+spaz
+spastic
+tranny
+faggot
+fag
+dyke
+cripple
+mongoloid
+# Racial slurs - abbreviated forms
+kike
+wetback
+spic
+gook
+# General insults often used as slurs
+tard

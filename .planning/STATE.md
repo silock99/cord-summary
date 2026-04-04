@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Phase 5 context gathered
-last_updated: "2026-04-04T05:35:03.200Z"
-last_activity: 2026-04-03
+status: executing
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-04-04T06:22:00Z"
+last_activity: 2026-04-04
 progress:
-  total_phases: 6
+  total_phases: 5
   completed_phases: 4
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 10
+  completed_plans: 10
   percent: 100
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Users can quickly catch up on what they missed without reading through hundreds of messages
-**Current focus:** Phase 04 — summary-quality-improvements
+**Current focus:** Phase 05 — summary-language-controls
 
 ## Current Position
 
-Phase: 04
-Plan: Not started
-Status: All plans executed — pending verification
-Last activity: 2026-04-03
+Phase: 05
+Plan: 01 of 1
+Status: Plan 01 complete
+Last activity: 2026-04-04
 
 Progress: [██████████] 100%
 
@@ -61,6 +61,7 @@ Progress: [██████████] 100%
 | Phase 03 P02 | 2m | 2 tasks | 5 files |
 | Phase 04 P01 | 3m | 2 tasks | 3 files |
 | Phase 04 P02 | 2m | 2 tasks | 3 files |
+| Phase 05 P01 | 2m | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,9 @@ Recent decisions affecting current work:
 - [Phase 04]: Reply indentation capped at depth 2 for LLM readability
 - [Phase 04]: Popularity threshold: 5+ reactions OR 5+ replies per D-04
 - [Phase 04]: Post-preprocessing reply_count computation in summarize_channel
+- [Phase 05]: Blocklist/allowlist as plain text files in project root for operator simplicity
+- [Phase 05]: String concatenation at runtime to append guidelines, no mutation of module constants
+- [Phase 05]: Missing files log warning and continue with empty guidelines (graceful degradation)
 
 - [Phase 01]: Used hatchling build backend with src layout for proper package installation
 - [Phase 01]: No unit test for fetcher -- thin wrapper around discord.py async iterator
@@ -90,8 +94,6 @@ Recent decisions affecting current work:
 ### Roadmap Evolution
 
 - Phase 4 added: Summary Quality Improvements — reply/thread context, domain-tuned prompts, attachment metadata, reaction signals, pinned messages, model selection
-- Phase 5 added: Summary Language Controls — configurable language guidelines with blocklist/allowlist for AI summary output
-- Phase 6 added: Error Alerting — notify operator on scheduler failures via admin DM and optional webhook alerts
 
 ### Pending Todos
 
@@ -103,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T05:35:03.197Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-summary-language-controls/05-CONTEXT.md
+Last session: 2026-04-04T06:22:00Z
+Stopped at: Completed 05-01-PLAN.md
+Resume file: None

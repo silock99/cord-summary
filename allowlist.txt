@@ -1,0 +1,10 @@
+# Language allowlist for Discord Summary Bot
+# Format: term (reason for allowing)
+# Lines starting with # are comments.
+#
+# Example entries (uncomment and customize for your server):
+# kill (gaming/process terminology)
+# execute (programming terminology)
+# master (git branch terminology)
+# slave (database replication terminology)
+# cripple (used in "crippling bug" context)

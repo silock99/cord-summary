@@ -16,8 +16,6 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 2: On-Demand Summarization** - Users can run `/summary` and get formatted, topic-grouped bullet-point recaps posted to a dedicated channel
 - [ ] **Phase 3: Scheduling and Delivery** - Bot auto-posts overnight summaries at 9am and supports DM and thread delivery options
 - [ ] **Phase 4: Summary Quality Improvements** - Enrich LLM input with reply chains, importance signals, typed attachments, embed content, and signal-aware prompts
-- [ ] **Phase 5: Summary Language Controls** - Configurable language guidelines with blocklist/allowlist for AI summary output
-- [ ] **Phase 6: Error Alerting** - Notify operator on scheduler failures via admin DM and optional webhook alerts
 
 ## Phase Details
 
@@ -89,37 +87,12 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation and Pipeline | 3/3 | Complete | - |
-| 2. On-Demand Summarization | 2/2 | Complete | - |
-| 3. Scheduling and Delivery | 2/2 | Complete | - |
-| 4. Summary Quality Improvements | 2/2 | Complete | - |
-| 5. Summary Language Controls | 0/1 | Planning complete | - |
-
-### Phase 5: Summary Language Controls
-
-**Goal:** Add configurable language guidelines to AI summary system prompts -- a blocklist of insulting/inappropriate terms the LLM must avoid, with an allowlist for context-specific exceptions (phrases that seem harmful but are acceptable in the server's culture)
-**Requirements**: LANG-01, LANG-02, LANG-03, LANG-04, LANG-05
-**Depends on:** Phase 4
-**Success Criteria** (what must be TRUE):
-  1. Blocked terms from blocklist.txt are injected into both system prompts as language guidelines
-  2. Allowlist entries with reasons are parsed and included as exceptions in the prompt
-  3. Missing blocklist.txt or allowlist.txt logs a warning and bot continues without language rules
-  4. A default blocklist.txt ships with curated inappropriate terms
-  5. Language guidelines are appended to both SUMMARY_SYSTEM_PROMPT and MERGE_SYSTEM_PROMPT
-**Plans:** 1 plan
-
-Plans:
-- [ ] 05-01-PLAN.md — Language filter module, default blocklist/allowlist files, and integration into summarizer prompts and bot startup
-
-### Phase 6: Error Alerting
-**Goal:** Notify the bot operator when scheduled summaries fail silently -- DM a configured admin user on errors (permission denied, channel not found, thread creation failure, summarization crashes) and optionally forward alerts to a Discord webhook for a private ops channel or external service
-**Requirements**: TBD
-**Depends on:** Phase 4
-**Plans:** 0 plans
-
-Plans:
-- [ ] TBD (run /gsd:plan-phase 6 to break down)
+| 1. Foundation and Pipeline | 0/3 | Planning complete | - |
+| 2. On-Demand Summarization | 0/2 | Planning complete | - |
+| 3. Scheduling and Delivery | 0/2 | Planning complete | - |
+| 4. Summary Quality Improvements | 2/2 | Executing | - |
+| 5. Summary Language Controls | 1/1 | Complete | 2026-04-04 |
