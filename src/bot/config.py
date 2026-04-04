@@ -35,13 +35,15 @@ class Settings(BaseSettings):
 
     # Rate limiting
     summary_cooldown_seconds: int = 7200  # 2 hours default
-    cooldown_exempt_user_ids_raw: str = Field(default="", alias="COOLDOWN_EXEMPT_USER_IDS")
+
+    # Admin user IDs (comma-separated) — receive error DMs, can use /post-summary, exempt from cooldown
+    admin_user_ids_raw: str = Field(default="", alias="ADMIN_USER_IDS")
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def cooldown_exempt_user_ids(self) -> list[int]:
-        """Parse comma-separated user IDs exempt from cooldown."""
-        raw = self.cooldown_exempt_user_ids_raw
+    def admin_user_ids(self) -> list[int]:
+        """Parse comma-separated admin user IDs."""
+        raw = self.admin_user_ids_raw
         if not raw:
             return []
         parts = [p.strip() for p in raw.split(",")]
