@@ -3,6 +3,7 @@ import logging
 import discord
 from discord.ext import commands
 
+from bot.commands.post_summary import register_post_summary_command
 from bot.commands.summary import register_summary_command
 from bot.config import Settings
 from bot.language_filter import load_language_config
@@ -25,6 +26,7 @@ class SummaryBot(commands.Bot):
     async def setup_hook(self) -> None:
         """Register commands and sync to the configured guild (INFRA-03). Fires once before connecting."""
         register_summary_command(self)
+        register_post_summary_command(self)
         guild = discord.Object(id=self.settings.guild_id)
         self.tree.copy_global_to(guild=guild)
         synced = await self.tree.sync(guild=guild)
