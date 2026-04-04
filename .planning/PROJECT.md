@@ -67,6 +67,8 @@ Users can quickly catch up on what they missed without reading through hundreds 
 | Slash commands over prefix commands | Modern Discord standard, better UX with autocomplete | ✓ Validated Phase 2 |
 | Ephemeral on-demand summaries | On-demand summaries are private; public posting reserved for scheduled summaries | ✓ Decided Phase 2 (D-03) |
 | No action items extraction in v1 | Topic-grouped bullets only; action items deferred | ✓ Decided Phase 2 (D-13) |
+| ADMIN_USER_IDS replaces COOLDOWN_EXEMPT_USER_IDS | Single admin concept: error DMs, /post-summary access, cooldown exemption | ✓ Decided Phase 6 (D-14, D-15) |
+| Error alerts via DM, not channel embeds | Keeps summary channel clean; errors only visible to admins | ✓ Decided Phase 6 (D-01, D-02) |
 
 ## Evolution
 
@@ -86,4 +88,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-04 after Phase 5 completion — language filter module with blocklist/allowlist for controlling LLM summary language*
+*Last updated: 2026-04-04 after Phase 6 completion — error alerting via admin DMs, /post-summary admin command*
