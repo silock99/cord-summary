@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-04-03T08:54:48.729Z"
+stopped_at: Phase 5 context gathered
+last_updated: "2026-04-04T05:35:03.200Z"
 last_activity: 2026-04-03
 progress:
-  total_phases: 4
+  total_phases: 6
   completed_phases: 4
   total_plans: 9
   completed_plans: 9
@@ -90,6 +90,8 @@ Recent decisions affecting current work:
 ### Roadmap Evolution
 
 - Phase 4 added: Summary Quality Improvements — reply/thread context, domain-tuned prompts, attachment metadata, reaction signals, pinned messages, model selection
+- Phase 5 added: Summary Language Controls — configurable language guidelines with blocklist/allowlist for AI summary output
+- Phase 6 added: Error Alerting — notify operator on scheduler failures via admin DM and optional webhook alerts
 
 ### Pending Todos
 
@@ -101,6 +103,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-03T08:48:45Z
-Stopped at: Completed 04-02-PLAN.md
-Resume file: None
+Last session: 2026-04-04T05:35:03.197Z
+Stopped at: Phase 5 context gathered
+Resume file: .planning/phases/05-summary-language-controls/05-CONTEXT.md
