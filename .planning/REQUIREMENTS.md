@@ -56,6 +56,14 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **QUAL-06**: Discord embed content (title + description) is extracted from user messages and included in LLM input
 - [x] **QUAL-07**: System prompts explicitly instruct the LLM on how to handle every signal marker
 
+### Summary Language Controls
+
+- [ ] **LANG-01**: Blocklist of terms loaded from text file and injected into LLM system prompts as forbidden language
+- [ ] **LANG-02**: Allowlist of terms with context reasons loaded and included as exceptions in language guidelines
+- [ ] **LANG-03**: Language guidelines appended to both single-pass and merge system prompts at runtime
+- [ ] **LANG-04**: Missing blocklist/allowlist files produce a warning log and bot continues without language rules
+- [ ] **LANG-05**: Default blocklist.txt ships with curated set of common inappropriate terms
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -118,11 +126,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QUAL-06 | Phase 4 | Complete |
 | QUAL-07 | Phase 4 | Complete |
 
+| LANG-01 | Phase 5 | Planned |
+| LANG-02 | Phase 5 | Planned |
+| LANG-03 | Phase 5 | Planned |
+| LANG-04 | Phase 5 | Planned |
+| LANG-05 | Phase 5 | Planned |
+
 **Coverage:**
-- v1 requirements: 28 total
-- Mapped to phases: 28
+- v1 requirements: 33 total
+- Mapped to phases: 33
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-27*
-*Last updated: 2026-04-03 after Phase 4 completion*
+*Last updated: 2026-04-04 after Phase 5 planning*
