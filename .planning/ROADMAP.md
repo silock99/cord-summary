@@ -16,6 +16,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 2: On-Demand Summarization** - Users can run `/summary` and get formatted, topic-grouped bullet-point recaps posted to a dedicated channel
 - [ ] **Phase 3: Scheduling and Delivery** - Bot auto-posts overnight summaries at 9am and supports DM and thread delivery options
 - [ ] **Phase 4: Summary Quality Improvements** - Enrich LLM input with reply chains, importance signals, typed attachments, embed content, and signal-aware prompts
+- [x] **Phase 5: Summary Language Controls** - Operators can control what language the LLM uses in summaries via configurable blocklist/allowlist
+- [ ] **Phase 6: Error Alerting** - DM-based error alerts to admins and admin-only /post-summary command for manual public summaries
 
 ## Phase Details
 
@@ -84,15 +86,42 @@ Plans:
 - [x] 04-01-PLAN.md — Extend ProcessedMessage data model and enrich preprocessor with all new metadata extraction
 - [x] 04-02-PLAN.md — Reply-chain formatting, popularity computation, and signal-aware system prompts
 
+### Phase 5: Summary Language Controls
+**Goal:** Operators can control what language the LLM uses in summaries via configurable blocklist/allowlist text files
+**Depends on:** Phase 4
+**Success Criteria** (what must be TRUE):
+  1. Blocklist and allowlist text files are read at runtime and appended to system prompts
+  2. Missing files log a warning and continue with empty guidelines
+**Plans:** 1 plan
+
+Plans:
+- [x] 05-01-PLAN.md — Language filter module with blocklist/allowlist for controlling LLM summary language
+
+### Phase 6: Error Alerting
+**Goal:** Admins receive DM-based error notifications when summary generation fails, and can manually trigger public summaries via /post-summary command
+**Depends on:** Phase 5
+**Success Criteria** (what must be TRUE):
+  1. When summary generation or delivery fails, all configured admin users receive a DM with batched error details
+  2. Error DMs replace existing red error embeds in the summary channel (summary channel stays clean)
+  3. /post-summary slash command posts a public summary to the summary channel, restricted to admin user IDs
+  4. ADMIN_USER_IDS env var controls both error alert recipients and /post-summary access
+  5. ADMIN_USER_IDS replaces COOLDOWN_EXEMPT_USER_IDS — admins are automatically cooldown-exempt
+**Plans:** 2 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Config migration (ADMIN_USER_IDS replaces COOLDOWN_EXEMPT_USER_IDS), error alerting module, and overnight.py integration
+- [ ] 06-02-PLAN.md — /post-summary admin-only slash command with public posting and thread support
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation and Pipeline | 0/3 | Planning complete | - |
-| 2. On-Demand Summarization | 0/2 | Planning complete | - |
-| 3. Scheduling and Delivery | 0/2 | Planning complete | - |
-| 4. Summary Quality Improvements | 2/2 | Executing | - |
+| 1. Foundation and Pipeline | 3/3 | Complete | - |
+| 2. On-Demand Summarization | 2/2 | Complete | - |
+| 3. Scheduling and Delivery | 2/2 | Complete | - |
+| 4. Summary Quality Improvements | 2/2 | Complete | - |
 | 5. Summary Language Controls | 1/1 | Complete | 2026-04-04 |
+| 6. Error Alerting | 0/2 | Planned | - |
