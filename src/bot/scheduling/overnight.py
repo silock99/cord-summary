@@ -108,7 +108,15 @@ class OvernightScheduler:
                 embeds = build_summary_embeds(summary_text, channel.name, label)
                 for embed in embeds:
                     embed.set_footer(text=f"Scheduled {label} summary")
-                    await target.send(embed=embed)
+                    try:
+                        await target.send(embed=embed)
+                    except discord.Forbidden:
+                        logger.error(
+                            f"Missing permissions to send {label} summary for "
+                            f"#{channel.name} to {target} — check Send Messages "
+                            f"and Send Messages in Threads permissions"
+                        )
+                        break
 
             except SummaryError as e:
                 error_msg = f"Failed to summarize #{channel.name}: {e}"
@@ -128,7 +136,13 @@ class OvernightScheduler:
                 description=error_text,
                 color=0xFF0000,
             )
-            await target.send(embed=error_embed)
+            try:
+                await target.send(embed=error_embed)
+            except discord.Forbidden:
+                logger.error(
+                    f"Missing permissions to post error report to {target}: "
+                    f"{error_text}"
+                )
 
         logger.info(f"{label} summary complete, {len(errors)} error(s)")
 
