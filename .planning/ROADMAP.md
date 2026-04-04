@@ -95,3 +95,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 2. On-Demand Summarization | 0/2 | Planning complete | - |
 | 3. Scheduling and Delivery | 0/2 | Planning complete | - |
 | 4. Summary Quality Improvements | 2/2 | Executing | - |
+| 5. Summary Language Controls | 1/1 | Complete | 2026-04-04 |
