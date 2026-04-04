@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 import discord
 from discord.ext import tasks
 
+from bot.alerting import send_error_alerts
 from bot.delivery.threads import create_summary_thread
 from bot.formatting.embeds import build_summary_embeds
 from bot.models import SummaryError
@@ -56,9 +57,13 @@ class OvernightScheduler:
 
     async def _on_overnight_error(self, error: Exception) -> None:
         logger.error(f"Overnight summary task failed: {error}", exc_info=error)
+        error_msg = f"Task-level failure: {type(error).__name__}: {error}"
+        await send_error_alerts(self.bot, "Overnight Task Error", [error_msg])
 
     async def _on_hourly_error(self, error: Exception) -> None:
         logger.error(f"Hourly summary task failed: {error}", exc_info=error)
+        error_msg = f"Task-level failure: {type(error).__name__}: {error}"
+        await send_error_alerts(self.bot, "Hourly Task Error", [error_msg])
 
     async def _post_summary(
         self, label: str, after: datetime, before: datetime | None = None
@@ -108,15 +113,7 @@ class OvernightScheduler:
                 embeds = build_summary_embeds(summary_text, channel.name, label)
                 for embed in embeds:
                     embed.set_footer(text=f"Scheduled {label} summary")
-                    try:
-                        await target.send(embed=embed)
-                    except discord.Forbidden:
-                        logger.error(
-                            f"Missing permissions to send {label} summary for "
-                            f"#{channel.name} to {target} — check Send Messages "
-                            f"and Send Messages in Threads permissions"
-                        )
-                        break
+                    await target.send(embed=embed)
 
             except SummaryError as e:
                 error_msg = f"Failed to summarize #{channel.name}: {e}"
@@ -130,19 +127,7 @@ class OvernightScheduler:
                 continue
 
         if errors:
-            error_text = "\n".join(f"- {e}" for e in errors)
-            error_embed = discord.Embed(
-                title=f"{label} Summary Errors",
-                description=error_text,
-                color=0xFF0000,
-            )
-            try:
-                await target.send(embed=error_embed)
-            except discord.Forbidden:
-                logger.error(
-                    f"Missing permissions to post error report to {target}: "
-                    f"{error_text}"
-                )
+            await send_error_alerts(self.bot, label, errors)
 
         logger.info(f"{label} summary complete, {len(errors)} error(s)")
 
