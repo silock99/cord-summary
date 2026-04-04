@@ -10,6 +10,7 @@ from bot.models import ProcessedMessage, SummaryError
 from bot.providers.base import SummaryProvider
 from bot.pipeline.fetcher import fetch_messages
 from bot.pipeline.preprocessor import preprocess_message
+from bot.language_filter import get_language_guidelines
 from bot.pipeline.chunker import (
     chunk_by_time_window,
     format_chunk_for_llm,
@@ -62,11 +63,16 @@ async def summarize_messages(
     if not messages:
         return "No messages to summarize."
 
+    # Append language guidelines to prompts at runtime (Phase 5: LANG-01, LANG-05)
+    guidelines = get_language_guidelines()
+    summary_prompt = SUMMARY_SYSTEM_PROMPT + guidelines
+    merge_prompt = MERGE_SYSTEM_PROMPT + guidelines
+
     if not needs_chunking(messages, max_context_tokens):
         # Single-pass: all messages fit
         text = format_chunk_for_llm(messages)
         logger.info(f"Single-pass summarization: {len(messages)} messages")
-        return await provider.summarize(text, SUMMARY_SYSTEM_PROMPT)
+        return await provider.summarize(text, summary_prompt)
 
     # Two-pass (D-09): chunk -> summarize each -> merge
     chunks = chunk_by_time_window(messages)
@@ -75,7 +81,7 @@ async def summarize_messages(
     chunk_summaries: list[str] = []
     for i, chunk in enumerate(chunks):
         text = format_chunk_for_llm(chunk)
-        summary = await provider.summarize(text, SUMMARY_SYSTEM_PROMPT)
+        summary = await provider.summarize(text, summary_prompt)
         chunk_summaries.append(summary)
         logger.info(f"Chunk {i+1}/{len(chunks)} summarized")
 
@@ -83,7 +89,7 @@ async def summarize_messages(
     merged_input = "\n\n---\n\n".join(
         f"Period {i+1} summary:\n{s}" for i, s in enumerate(chunk_summaries)
     )
-    return await provider.summarize(merged_input, MERGE_SYSTEM_PROMPT)
+    return await provider.summarize(merged_input, merge_prompt)
 
 
 async def summarize_channel(
