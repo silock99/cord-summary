@@ -62,7 +62,7 @@ def register_summary_command(bot) -> None:
     ) -> None:
         # Step 0 - Cooldown check
         cooldown = bot.settings.summary_cooldown_seconds
-        if cooldown > 0 and interaction.user.id not in bot.settings.cooldown_exempt_user_ids:
+        if cooldown > 0 and interaction.user.id not in bot.settings.admin_user_ids:
             user_id = interaction.user.id
             now = datetime.now(timezone.utc)
             last_used = _cooldowns.get(user_id)
