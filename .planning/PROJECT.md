@@ -34,7 +34,12 @@ Users can quickly catch up on what they missed without reading through hundreds 
 
 ### Active
 
-(None — next milestone not yet planned)
+- [ ] Transfer portal lookup command filtered by sport and school
+- [ ] KU recruiting list with role-gated add/remove (name, position, previous school, star rating)
+- [ ] KU recruiting list view command filterable by sport
+- [ ] Career stats lookup for players on KU recruiting list
+- [ ] JSON file persistence for recruiting data
+- [ ] Two sports supported: men's college basketball and men's college football
 
 ### Out of Scope
 
@@ -45,6 +50,16 @@ Users can quickly catch up on what they missed without reading through hundreds 
 - Real-time streaming summaries — on-demand and scheduled only
 - Built-in AI model — user plugs in their preferred provider
 - Role-based permissions — any server member can use (admin commands excepted)
+
+## Current Milestone: v1.1 Athletics Intelligence
+
+**Goal:** Add transfer portal monitoring, KU recruiting tracking, and career stats lookup for men's basketball and football.
+
+**Target features:**
+- Transfer portal lookup — user picks sport + school, sees players currently in the portal
+- KU recruiting list — authorized users can manage players; anyone can view by sport
+- Career stats — college career stats for players on the KU recruiting list
+- Data sourced from web (research needed for best sources)
 
 ## Context
 
@@ -96,4 +111,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-07 after v1.0 milestone*
+*Last updated: 2026-04-07 after v1.1 milestone start*
