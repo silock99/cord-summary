@@ -1,333 +1,377 @@
 # Architecture Patterns
 
-**Domain:** Discord bot with scheduled and on-demand LLM-powered channel summarization
-**Researched:** 2026-03-27
+**Domain:** Athletics intelligence features (transfer portal, recruiting, career stats) integrated into existing Discord summary bot
+**Researched:** 2026-04-07
 
-## System Overview
+## Existing Architecture Summary
+
+The v1.0 bot follows a clean modular pattern:
 
 ```
-+------------------+     +-------------------+     +------------------+
-|   Discord API    |<--->|   Bot Core        |<--->|  Summarization   |
-|                  |     |   (discord.py)    |     |  Service         |
-| - Slash commands |     |                   |     |                  |
-| - Message history|     | +---------------+ |     | +------------+  |
-| - Send messages  |     | | Commands Cog  | |     | | Message    |  |
-|                  |     | | (slash cmds)  | |---->| | Collector  |  |
-|                  |     | +---------------+ |     | +-----+------+  |
-|                  |     |                   |     |       |          |
-|                  |     | +---------------+ |     | +-----v------+  |
-|                  |     | | Scheduler Cog | |---->| | Formatter  |  |
-|                  |     | | (daily 9am)   | |     | | (prompt    |  |
-|                  |     | +---------------+ |     | |  builder)  |  |
-|                  |     |                   |     | +-----+------+  |
-|                  |     | +---------------+ |     |       |          |
-|                  |     | | Delivery      | |<----| +-----v------+  |
-|                  |     | | (embeds, DMs) | |     | | LLM Client |  |
-|                  |     | +---------------+ |     | | (abstract) |  |
-+------------------+     +-------------------+     | +-----+------+  |
-                                                   |       |          |
-                                                   | +-----v------+  |
-                                                   | | OpenAI /   |  |
-                                                   | | Claude /   |  |
-                                                   | | Any LLM    |  |
-                                                   | +------------+  |
-                                                   +------------------+
+src/bot/
+  client.py           # SummaryBot(commands.Bot) — setup_hook registers commands, starts scheduler
+  config.py           # Settings(BaseSettings) — pydantic-settings, all config from .env
+  models.py           # ProcessedMessage dataclass, SummaryError
+  summarizer.py       # Orchestrator: fetch -> preprocess -> chunk -> summarize
+  alerting.py         # Admin error DMs
+  language_filter.py  # Blocklist/allowlist for summary language
+  commands/
+    summary.py        # /summary slash command (register_summary_command pattern)
+    post_summary.py   # /post-summary admin command (register_post_summary_command pattern)
+  delivery/
+    threads.py        # Thread creation for summary posting
+  formatting/
+    embeds.py         # build_summary_embeds() — topic-boundary splitting
+  pipeline/
+    fetcher.py        # Discord message history pagination
+    preprocessor.py   # Raw message -> ProcessedMessage
+    chunker.py        # Token-aware chunking for LLM context
+  providers/
+    base.py           # SummaryProvider Protocol (summarize + close)
+    openai_provider.py
+    anthropic_provider.py
+  scheduling/
+    overnight.py      # OvernightScheduler with tasks.loop
 ```
 
-## Component Responsibilities
+**Key patterns established:**
+- Command registration: `register_X_command(bot)` functions called in `setup_hook`
+- Admin gating: `ADMIN_USER_IDS` parsed from env, checked via `interaction.client.settings.admin_user_ids`
+- JSON persistence: `data/` directory, `json.loads`/`json.dumps`, `asyncio.Lock` for concurrency
+- Embed formatting: `build_summary_embeds()` handles 4096-char splitting
+- Settings: All config via pydantic-settings `Settings` class
+
+## Recommended Architecture for v1.1
+
+### New Component Map
+
+```
+src/bot/
+  commands/
+    portal.py          # NEW: /portal slash command
+    recruiting.py      # NEW: /recruit-add, /recruit-remove, /recruit-list commands
+    stats.py           # NEW: /career-stats slash command
+  data/
+    recruiting_store.py # NEW: JSON CRUD for KU recruiting list
+  scrapers/
+    base.py            # NEW: BaseScraper protocol/ABC
+    portal_scraper.py  # NEW: Transfer portal data fetching
+    stats_scraper.py   # NEW: Career stats fetching
+  formatting/
+    embeds.py          # MODIFY: Add athletics embed builders (or new file athletics_embeds.py)
+  config.py            # MODIFY: Add new settings (scraper configs, admin role IDs)
+  client.py            # MODIFY: Register new commands in setup_hook
+```
+
+### Component Boundaries
 
 | Component | Responsibility | Communicates With |
 |-----------|---------------|-------------------|
-| **Bot Core** (`bot.py`) | Initialize discord.py `commands.Bot`, load cogs, manage lifecycle | Discord API, all cogs |
-| **Commands Cog** (`cogs/commands.py`) | Register `/summarize` slash command, parse user input, invoke summarization service | Summarization Service, Delivery |
-| **Scheduler Cog** (`cogs/scheduler.py`) | Run the 9am daily task via `discord.ext.tasks`, invoke summarization for overnight window | Summarization Service, Delivery |
-| **Message Collector** (`services/collector.py`) | Fetch messages from Discord channels using `channel.history()`, handle pagination, filter by time range | Discord API (via bot instance) |
-| **Formatter** (`services/formatter.py`) | Convert raw messages into a prompt suitable for the LLM, format the LLM response into Discord embeds | Message Collector output, LLM Client output |
-| **LLM Client** (`services/llm/base.py` + providers) | Abstract interface for summarization -- `async def summarize(text) -> str` | External LLM APIs |
-| **Delivery** (`services/delivery.py`) | Post summaries to the dedicated channel, optionally DM users, handle embed splitting for the 4096-char limit | Discord API (via bot instance) |
-| **Config** (`config.py`) | Load environment variables, validate settings, expose typed config object | All components |
+| `commands/portal.py` | `/portal` slash command — user picks sport + school, sees transfer portal players | `scrapers/portal_scraper.py`, `formatting/` |
+| `commands/recruiting.py` | `/recruit-add`, `/recruit-remove`, `/recruit-list` — CRUD for KU recruiting list | `data/recruiting_store.py`, `formatting/` |
+| `commands/stats.py` | `/career-stats` — lookup career stats for a player on the recruiting list | `data/recruiting_store.py`, `scrapers/stats_scraper.py`, `formatting/` |
+| `data/recruiting_store.py` | JSON file CRUD with asyncio.Lock — stores recruiting list | Filesystem (`data/recruiting.json`) |
+| `scrapers/portal_scraper.py` | Fetch transfer portal data from external source | aiohttp (bundled with discord.py), external APIs |
+| `scrapers/stats_scraper.py` | Fetch career stats from external source | aiohttp, external APIs |
+| `formatting/athletics_embeds.py` | Build Discord embeds for portal results, recruiting list, stats | discord.py Embed API |
 
-## Recommended Project Structure
+### Data Flow
 
+**Transfer Portal Lookup:**
 ```
-discord-summary-bot/
-|-- bot.py                    # Entry point: create Bot, load cogs, run
-|-- config.py                 # Settings from env vars (pydantic-settings)
-|-- requirements.txt
-|-- .env.example
-|
-|-- cogs/
-|   |-- __init__.py
-|   |-- commands.py           # /summarize slash command
-|   |-- scheduler.py          # Daily 9am overnight summary task
-|
-|-- services/
-|   |-- __init__.py
-|   |-- collector.py          # Fetch + paginate channel messages
-|   |-- formatter.py          # Messages -> prompt, LLM response -> embed
-|   |-- delivery.py           # Send embeds to channel / DM
-|   |-- llm/
-|       |-- __init__.py
-|       |-- base.py           # Abstract SummarizerBackend class
-|       |-- openai_backend.py # OpenAI implementation
-|       |-- claude_backend.py # Anthropic implementation
-|       |-- factory.py        # Create backend from config string
-|
-|-- tests/
-    |-- test_collector.py
-    |-- test_formatter.py
-    |-- test_delivery.py
-    |-- test_llm_backends.py
+User /portal sport:basketball school:Kansas
+  -> commands/portal.py validates input, defers response
+  -> scrapers/portal_scraper.py fetches portal data (filtered by sport + school)
+  -> formatting/athletics_embeds.py builds embed table
+  -> Discord embed response (ephemeral)
 ```
 
-**Rationale for this layout:**
-
-- **Cogs are thin.** They handle Discord interaction (slash commands, scheduled triggers) and delegate all logic to services. This keeps business logic testable without needing a live Discord connection.
-- **Services are plain Python classes.** They receive a bot instance or channel reference as a dependency -- no inheritance from discord.py classes. This makes unit testing straightforward.
-- **LLM backends live behind a factory.** `factory.py` reads `LLM_PROVIDER=openai` from config and returns the right backend. Adding a new provider means adding one file and one factory branch.
-
-## Data Flow
-
-### On-Demand Summary (`/summarize`)
-
+**Recruiting List Management:**
 ```
-User runs /summarize [channel] [timeframe]
-         |
-         v
-Commands Cog: parse args, determine time window
-         |
-         v
-Message Collector: channel.history(after=start, before=end, oldest_first=True)
-  - Paginate automatically (discord.py handles 100-msg batches)
-  - Return list of Message objects
-         |
-         v
-Formatter: build_prompt(messages) -> structured text
-  - Format: "username (timestamp): content" per message
-  - Add system prompt: "Summarize as concise bullet points..."
-  - Truncate if total exceeds LLM context window
-         |
-         v
-LLM Client: summarize(prompt) -> summary text
-  - Call provider API (OpenAI, Claude, etc.)
-  - Return plain text summary
-         |
-         v
-Formatter: format_embed(summary) -> Discord Embed(s)
-  - Split into multiple embeds if > 4096 chars
-  - Add metadata (channel name, time range, message count)
-         |
-         v
-Delivery: send to #summaries channel
-  - Optionally DM the requesting user
+User /recruit-add name:"Player Name" position:PG school:"Duke" stars:5 sport:basketball
+  -> commands/recruiting.py checks admin permission
+  -> data/recruiting_store.py adds player to JSON, acquires asyncio.Lock
+  -> Confirmation embed response
+
+User /recruit-list sport:basketball
+  -> commands/recruiting.py (no admin check — anyone can view)
+  -> data/recruiting_store.py reads current list
+  -> formatting/athletics_embeds.py builds list embed
+  -> Discord embed response
 ```
 
-### Scheduled Overnight Summary (9am daily)
-
+**Career Stats Lookup:**
 ```
-discord.ext.tasks loop fires at 09:00 (configured timezone)
-         |
-         v
-Scheduler Cog: calculate overnight window
-  - start = today 10:00 PM - 11 hours (yesterday 10pm)
-  - end   = today 09:00 AM
-  - iterate over configured channels
-         |
-         v
-(Same pipeline as on-demand from Message Collector onward)
-         |
-         v
-Delivery: post to #summaries (no DM unless configured)
+User /career-stats player:"Player Name"
+  -> commands/stats.py resolves player from recruiting list
+  -> scrapers/stats_scraper.py fetches career stats from external source
+  -> formatting/athletics_embeds.py builds stats embed
+  -> Discord embed response
 ```
 
-## Integration Points
+## Data Sources Strategy
 
-### Discord API Integration
+### Transfer Portal Data
 
-| Operation | API Method | Rate Limit Concern | Mitigation |
-|-----------|-----------|-------------------|------------|
-| Fetch messages | `channel.history()` | 100 msgs per request, auto-paginated by discord.py | discord.py handles pagination and rate limits internally; for very busy channels (1000+ messages overnight), expect 10+ API calls |
-| Send embed | `channel.send(embed=)` | 5 messages per 5 seconds per channel | Batch into fewer embeds; split only when exceeding 4096 chars |
-| Slash command registration | `bot.tree.sync()` | Once at startup | Sync on `on_ready`, not on every restart during dev (use guild-specific sync for dev) |
-| DM a user | `user.send()` | Same as channel send | Only when requested |
+**Recommended: Sportradar Trial API** (MEDIUM confidence)
 
-### LLM Provider Integration
+Sportradar added dedicated Transfer Portal endpoints in October 2025:
+- Basketball (Men's): `https://api.sportradar.com/ncaamb/trial/v8/en/league/transfer_portal.json`
+- Basketball (Women's): `https://api.sportradar.com/ncaawb/trial/v8/en/league/transfer_portal.json`
+- Football: Similar endpoint exists
 
-The abstract interface should be minimal -- a single method:
+Returns structured JSON with player name, position, height, weight, experience, school. Free 30-day trial with API key. After trial expires, needs paid subscription or alternative.
 
-```python
-from abc import ABC, abstractmethod
+**Fallback: Web scraping 247sports/On3** (LOW confidence)
 
-class SummarizerBackend(ABC):
-    @abstractmethod
-    async def summarize(self, prompt: str) -> str:
-        """Send prompt to LLM, return summary text."""
-        ...
-```
+Both sites use heavy JavaScript rendering and anti-bot measures. Would require headless browser (Playwright/Selenium) which adds significant complexity. Not recommended as primary approach.
 
-Each provider implements this with their SDK:
-- **OpenAI**: `openai.AsyncOpenAI().chat.completions.create()`
-- **Anthropic**: `anthropic.AsyncAnthropic().messages.create()`
+**Fallback: ESPN undocumented API** (LOW confidence)
 
-The factory pattern selects the backend at startup from an env var (`LLM_PROVIDER`), so zero provider code touches cogs or other services.
+ESPN has undocumented public endpoints but no known transfer portal endpoint. Could break without notice. Not suitable for this feature.
 
-### Scheduling Integration
+**Decision: Start with Sportradar trial API.** Build scraper interface as a Protocol so the data source can be swapped later if Sportradar trial expires. The bot owner can register for a free Sportradar developer account. If Sportradar becomes unavailable, the scraper protocol allows plugging in a web scraper or alternative API without changing command code.
 
-Use `discord.ext.tasks` with the `time` parameter -- it is purpose-built for this:
+### Career Stats Data
 
-```python
-import datetime
-from discord.ext import commands, tasks
+**Recommended: ESPN undocumented API** (MEDIUM confidence)
 
-class SchedulerCog(commands.Cog):
-    def __init__(self, bot, timezone):
-        self.bot = bot
-        run_time = datetime.time(hour=9, minute=0, tzinfo=timezone)
-        # Dynamically set the time on the loop
-        self.daily_summary.change_interval(time=run_time)
-        self.daily_summary.start()
+ESPN provides publicly accessible JSON endpoints without authentication:
+- Athlete lookup: `https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/teams/{team}/roster`
+- Athlete stats: `https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/athletes/{id}/statistics`
 
-    def cog_unload(self):
-        self.daily_summary.cancel()
+No API key needed. Structured JSON. Covers both basketball and football.
 
-    @tasks.loop(hours=24)  # overridden by change_interval above
-    async def daily_summary(self):
-        # trigger overnight summary pipeline
-        ...
+**Caveat:** These are undocumented — ESPN can change them without notice. Build behind the scraper Protocol so a replacement source can be swapped in.
 
-    @daily_summary.before_loop
-    async def before_daily(self):
-        await self.bot.wait_until_ready()
-```
+**Fallback: Sports-Reference.com scraping** (LOW confidence)
 
-No need for APScheduler or external scheduling libraries -- `discord.ext.tasks` natively supports running at a specific time of day with timezone awareness. This avoids adding unnecessary dependencies.
+Sports-Reference has the best career stats data but actively blocks bots with Cloudflare, enforces 20 requests/minute rate limit, and charges $5,000+ for data access. Do NOT scrape.
+
+**Fallback: NCAA API (henrygd)** (MEDIUM confidence)
+
+Free, open-source API wrapping ncaa.com data. Has current-season team/individual stats but NOT player career stats. Useful as a supplementary source but cannot serve as primary career stats source.
+
+**Decision: ESPN undocumented API for career stats, behind a Protocol interface.** Free, structured JSON, covers both sports. Accept the risk that endpoints may change; the Protocol interface means swapping sources is a code change in one file, not a rewrite.
 
 ## Patterns to Follow
 
-### Pattern 1: Thin Cogs, Fat Services
+### Pattern 1: Scraper Protocol (mirrors existing SummaryProvider pattern)
 
-**What:** Cogs contain only Discord interaction logic (command definitions, event listeners). All business logic lives in service classes.
+**What:** Define a Protocol for each data source type, matching the existing `SummaryProvider` pattern.
+**When:** Any external data fetching.
+**Why:** The bot already has this pattern for LLM providers. Consistency + swappability.
 
-**When:** Always. This is the single most important architectural decision for testability.
-
-**Why:** Services can be unit-tested with mock data. Cogs require a live bot connection to test, making them expensive to verify.
-
-### Pattern 2: Dependency Injection via Bot Instance
-
-**What:** Attach services to the bot instance during setup. Cogs access them via `self.bot.summarizer`, `self.bot.collector`, etc.
-
-**When:** When services need to be shared across cogs or configured at startup.
-
-**Example:**
 ```python
-# bot.py
-bot = commands.Bot(command_prefix="!", intents=intents)
-bot.collector = MessageCollector(bot)
-bot.summarizer = SummarizerBackend.from_config(config)
-bot.delivery = DeliveryService(bot)
+from typing import Protocol, runtime_checkable
+from dataclasses import dataclass
+
+@dataclass
+class PortalPlayer:
+    name: str
+    position: str
+    previous_school: str
+    sport: str  # "basketball" | "football"
+    height: str | None = None
+    experience: str | None = None
+
+@runtime_checkable
+class PortalSource(Protocol):
+    async def get_portal_players(self, sport: str, school: str | None = None) -> list[PortalPlayer]:
+        """Fetch players currently in the transfer portal."""
+        ...
+
+    async def close(self) -> None:
+        """Clean up resources."""
+        ...
 ```
 
-### Pattern 3: Async Throughout
+### Pattern 2: JSON Store with asyncio.Lock (mirrors former DMManager)
 
-**What:** Every service method is `async def`. The LLM call, message fetching, and delivery are all I/O-bound.
+**What:** JSON file persistence with async locking for concurrent access.
+**When:** Recruiting list CRUD.
+**Why:** The bot already used this exact pattern for DM subscribers. No database dependency.
 
-**When:** Always. discord.py runs on asyncio -- blocking calls freeze the entire bot.
+```python
+import asyncio
+import json
+from pathlib import Path
+from dataclasses import dataclass, asdict
 
-**Why:** A synchronous HTTP call to OpenAI would block the event loop, causing the bot to miss heartbeats and disconnect.
+@dataclass
+class Recruit:
+    name: str
+    position: str
+    previous_school: str
+    star_rating: int
+    sport: str  # "basketball" | "football"
 
-### Pattern 4: Graceful Embed Splitting
+class RecruitingStore:
+    def __init__(self, path: Path = Path("data/recruiting.json")):
+        self._path = path
+        self._lock = asyncio.Lock()
+        self._recruits: list[Recruit] = []
+        self._load()
 
-**What:** When a summary exceeds Discord's 4096-character embed description limit, split it into multiple embeds logically (at bullet point boundaries, not mid-sentence).
+    # _load(), _save(), add(), remove(), list_by_sport() methods
+    # Follow same pattern as former DMManager
+```
 
-**When:** Any time the LLM returns a long summary (likely for overnight recaps of busy channels).
+### Pattern 3: Command Registration (matches existing pattern)
+
+**What:** Each command module exports a `register_X_command(bot)` function.
+**When:** All new slash commands.
+**Why:** Exact pattern used by existing `/summary` and `/post-summary`.
+
+```python
+# commands/portal.py
+def register_portal_command(bot) -> None:
+    @bot.tree.command(name="portal", description="Look up transfer portal players")
+    @app_commands.describe(sport="Sport to search", school="Filter by school")
+    @app_commands.choices(sport=[
+        app_commands.Choice(name="Men's Basketball", value="basketball"),
+        app_commands.Choice(name="Football", value="football"),
+    ])
+    async def portal(interaction: discord.Interaction, sport: str, school: str | None = None):
+        await interaction.response.defer(ephemeral=True)
+        # fetch, format, respond
+```
+
+### Pattern 4: Admin Gating (matches existing is_admin pattern)
+
+**What:** Reuse the `is_admin()` check from `post_summary.py`.
+**When:** `/recruit-add` and `/recruit-remove` (write operations).
+**Why:** Same admin concept, same `ADMIN_USER_IDS` config. `/recruit-list` and `/portal` are open to all users.
+
+Extract the `is_admin()` check into a shared utility (e.g., `bot/checks.py`) since it will now be used by multiple command modules.
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Business Logic in Cogs
+### Anti-Pattern 1: Database for Simple List Storage
+**What:** Adding SQLite/PostgreSQL for the recruiting list.
+**Why bad:** The v1.0 project explicitly decided against databases. The recruiting list is a small dataset (dozens of players at most). JSON file persistence is the established pattern.
+**Instead:** Use the `RecruitingStore` with JSON + asyncio.Lock, same as the former `DMManager`.
 
-**What:** Putting message fetching, prompt building, or LLM calls directly in the slash command handler.
+### Anti-Pattern 2: Scraping JavaScript-Heavy Sites Directly
+**What:** Using Playwright/Selenium to scrape 247sports or On3 for portal data.
+**Why bad:** Adds heavyweight dependencies (Chromium binary), increases memory/CPU, fragile selectors break on site updates, potential ToS violations.
+**Instead:** Use structured APIs (Sportradar, ESPN) that return JSON. Fall back to scraping only if all API options fail.
 
-**Why bad:** Cannot unit test without Discord. Cannot reuse logic between on-demand and scheduled paths. Cog files become 500+ lines.
+### Anti-Pattern 3: Tight Coupling Commands to Data Sources
+**What:** Having command handlers directly call `aiohttp.get("https://api.sportradar.com/...")`.
+**Why bad:** When the data source changes (trial expires, API changes), you rewrite command logic.
+**Instead:** Commands call Protocol-typed scrapers. Swap the implementation, not the commands.
 
-**Instead:** Cog calls `await self.bot.collector.fetch(channel, start, end)` and passes result to the next service.
+### Anti-Pattern 4: One Monolithic Command File
+**What:** Putting all new commands in a single file.
+**Why bad:** The existing codebase separates `/summary` and `/post-summary` into distinct files. Three new feature areas (portal, recruiting, stats) should follow the same separation.
+**Instead:** One file per feature area: `portal.py`, `recruiting.py`, `stats.py`.
 
-### Anti-Pattern 2: Hardcoded LLM Provider
+## Integration Points with Existing Code
 
-**What:** Importing `openai` directly in the summarization logic without an abstraction layer.
+### Files to MODIFY
 
-**Why bad:** Switching providers requires rewriting business logic. Cannot mock for tests.
+| File | Change | Reason |
+|------|--------|--------|
+| `client.py` | Add `register_portal_command`, `register_recruiting_command`, `register_stats_command` calls in `setup_hook`. Initialize `RecruitingStore` and scraper instances. | Command registration pattern |
+| `config.py` | Add `sportradar_api_key: str = ""` and any other scraper config fields | New external API credentials |
+| `commands/__init__.py` | Export new registration functions | Module interface |
 
-**Instead:** Use the abstract `SummarizerBackend` + factory pattern.
+### Files to CREATE
 
-### Anti-Pattern 3: Storing Messages in a Database
+| File | Purpose |
+|------|---------|
+| `commands/portal.py` | `/portal` command |
+| `commands/recruiting.py` | `/recruit-add`, `/recruit-remove`, `/recruit-list` commands |
+| `commands/stats.py` | `/career-stats` command |
+| `data/recruiting_store.py` | JSON CRUD for recruiting list |
+| `scrapers/__init__.py` | Package init |
+| `scrapers/base.py` | Protocol definitions for PortalSource and StatsSource |
+| `scrapers/portal_scraper.py` | Sportradar API implementation of PortalSource |
+| `scrapers/stats_scraper.py` | ESPN API implementation of StatsSource |
+| `formatting/athletics_embeds.py` | Embed builders for all athletics features |
+| `checks.py` | Extracted `is_admin()` check shared across commands |
 
-**What:** Building a message cache or database to store Discord messages for later summarization.
+### Files UNCHANGED
 
-**Why bad:** For a single-server bot with on-demand + daily summaries, this adds significant complexity (schema, migrations, sync logic) with no benefit. Discord's API already stores all messages and provides efficient time-range queries.
-
-**Instead:** Fetch directly from Discord API at summary time. The 10-second delay for paginating a busy channel is acceptable.
-
-### Anti-Pattern 4: Using `on_message` Event for Collection
-
-**What:** Listening to every message in real-time and building an in-memory or database cache.
-
-**Why bad:** Requires the bot to be online 100% of the time or messages are lost. Memory grows unbounded. Adds complexity for no benefit when `channel.history()` exists.
-
-**Instead:** Use `channel.history(after=..., before=...)` at summary time.
+All existing summary pipeline files (`summarizer.py`, `pipeline/`, `providers/`, `scheduling/`, `delivery/`, `alerting.py`, `language_filter.py`) remain untouched. The new features are additive — they share the bot instance and settings but have no dependency on the summarization pipeline.
 
 ## Suggested Build Order
 
-Dependencies between components dictate the build sequence:
+The build order respects dependencies and delivers testable increments:
 
-```
-Phase 1: Foundation
-  config.py -> bot.py -> basic cog loading
-  (Bot can start and respond to a health-check command)
+### Phase 1: Foundation (recruiting store + shared utilities)
+1. Extract `is_admin()` into `checks.py`
+2. Build `data/recruiting_store.py` (JSON CRUD with asyncio.Lock)
+3. Build `commands/recruiting.py` (`/recruit-add`, `/recruit-remove`, `/recruit-list`)
+4. Build `formatting/athletics_embeds.py` (recruiting list embed)
+5. Wire into `client.py`
 
-Phase 2: Core Pipeline
-  collector.py -> formatter.py -> one LLM backend
-  (Can fetch messages and produce a summary in isolation)
+**Rationale:** Recruiting list has zero external dependencies. Pure local CRUD. Can be fully tested without API keys or network access. Establishes the data model that career stats will reference later.
 
-Phase 3: Discord Integration
-  commands.py cog -> delivery.py
-  (/summarize works end-to-end)
+### Phase 2: Transfer Portal
+1. Build `scrapers/base.py` (Protocol definitions)
+2. Build `scrapers/portal_scraper.py` (Sportradar implementation)
+3. Add `sportradar_api_key` to `config.py`
+4. Build `commands/portal.py` (`/portal` command)
+5. Add portal embed builder to `formatting/athletics_embeds.py`
+6. Wire into `client.py`
 
-Phase 4: Scheduling
-  scheduler.py cog
-  (Daily summaries work, reusing Phase 2-3 pipeline)
+**Rationale:** Portal lookup is independent of the recruiting list. Establishing the scraper Protocol pattern here makes Phase 3 straightforward.
 
-Phase 5: Polish
-  DM delivery option
-  Additional LLM backends
-  Error handling / logging
-  Embed splitting for long summaries
-```
+### Phase 3: Career Stats
+1. Build `scrapers/stats_scraper.py` (ESPN API implementation)
+2. Build `commands/stats.py` (`/career-stats` — resolves player from recruiting list)
+3. Add stats embed builder to `formatting/athletics_embeds.py`
+4. Wire into `client.py`
 
-**Why this order:**
-- Config and bot setup are prerequisites for everything.
-- The summarization pipeline (collect -> format -> LLM -> deliver) is the core value -- build it next.
-- Slash command integration connects the pipeline to users.
-- Scheduling reuses the entire pipeline, so it comes after the pipeline works.
-- Polish items are independent of each other and can be done in any order.
+**Rationale:** Career stats depends on the recruiting list (Phase 1) for player resolution and follows the scraper Protocol pattern (Phase 2). Must be last.
 
 ## Scalability Considerations
 
-| Concern | Single Server (current) | 10+ Channels | Very Busy Channels (1000+ msgs/day) |
-|---------|------------------------|--------------|--------------------------------------|
-| Message fetching | ~1 API call | Sequential per channel, ~10 calls | 10+ paginated calls per channel; add concurrency with `asyncio.gather` |
-| LLM token usage | One call per summary | One call per channel summary | May need to chunk messages and summarize in stages (map-reduce) |
-| Discord embed limits | Rarely hit | More likely with multi-channel | Implement embed splitting from the start |
-| Scheduling | Single 9am task | Loop over channels sequentially | Stagger to avoid rate limits |
+| Concern | Current (KU only) | If expanded to multiple teams |
+|---------|-------------------|-------------------------------|
+| Recruiting list size | ~20-30 players | Store per-team, still JSON-viable up to hundreds |
+| Portal API calls | On-demand per user request | Add caching layer (in-memory TTL cache, 15-min expiry) |
+| Stats API calls | On-demand, one player at a time | Add caching; ESPN has no auth but may rate-limit |
+| Command count | 5 new slash commands | Discord allows 100 guild commands; no issue |
+| Data file size | Single `recruiting.json`, <10KB | Still fine at <1MB; revisit if hitting hundreds of KB |
 
-For the stated single-server scope, none of these require special handling beyond basic embed splitting. The architecture supports future scaling without rewrites because each concern is isolated in its own service.
+### Caching Recommendation
+
+Add a simple in-memory TTL cache for scraper results to avoid hammering APIs on repeated lookups:
+
+```python
+from datetime import datetime, timedelta
+
+class TTLCache:
+    def __init__(self, ttl_minutes: int = 15):
+        self._cache: dict[str, tuple[datetime, any]] = {}
+        self._ttl = timedelta(minutes=ttl_minutes)
+
+    def get(self, key: str):
+        if key in self._cache:
+            ts, value = self._cache[key]
+            if datetime.now() - ts < self._ttl:
+                return value
+            del self._cache[key]
+        return None
+
+    def set(self, key: str, value):
+        self._cache[key] = (datetime.now(), value)
+```
+
+This is especially important for transfer portal data during the portal window (April 7-21, 2026) when many users may query the same school/sport combination.
 
 ## Sources
 
-- [discord.py Cogs documentation](https://discordpy.readthedocs.io/en/stable/ext/commands/cogs.html) -- HIGH confidence
-- [discord.py Tasks extension](https://discordpy.readthedocs.io/en/stable/ext/tasks/index.html) -- HIGH confidence
-- [Architecting Discord bot the right way - DEV Community](https://dev.to/itsnikhil/architecting-discord-bot-the-right-way-383e) -- MEDIUM confidence
-- [elizaOS/discord-summarizer](https://github.com/elizaOS/discord-summarizer) -- reference implementation, MEDIUM confidence
-- [discord.py Masterclass - Cogs](https://fallendeity.github.io/discord.py-masterclass/cogs/) -- MEDIUM confidence
-- [LiteLLM unified interface](https://docs.litellm.ai/) -- reference for provider abstraction, MEDIUM confidence
-- [LLM API Adapter](https://github.com/Inozem/llm_api_adapter) -- reference for lightweight adapter pattern, MEDIUM confidence
-- [Discord API - Channels Resource](https://discord.com/developers/docs/resources/channel) -- HIGH confidence
+- [Sportradar Transfer Portal Endpoint (Basketball)](https://developer.sportradar.com/sportradar-updates/changelog/ncaa-basketball-apis-transfer-portal-endpoint) — Transfer Portal API, October 2025
+- [Sportradar Transfer Portal Endpoint (Football)](https://developer.sportradar.com/sportradar-updates/changelog/ncaafb-transfer-portal-endpoint) — Football portal API
+- [Sportradar Developer Portal — Registration](https://developer.sportradar.com/member/register) — Free trial signup
+- [ESPN Public API Documentation (unofficial)](https://github.com/pseudo-r/Public-ESPN-API) — Undocumented ESPN endpoints
+- [ESPN Hidden API Gist](https://gist.github.com/akeaswaran/b48b02f1c94f873c6655e7129910fc3b) — Community-documented endpoints
+- [NCAA API (henrygd)](https://github.com/henrygd/ncaa-api) — Free NCAA data API
+- [Sports-Reference Bot Policy](https://www.sports-reference.com/bot-traffic.html) — Anti-scraping stance, rate limits
+- [CollegeFootballData.com API](https://api.collegefootballdata.com/) — College football stats, 1000 calls/mo free
+- [BallDontLie NCAAB API](https://ncaab.balldontlie.io/) — College basketball stats API
+- [247Sports Transfer Portal](https://247sports.com/season/2026-basketball/transferportal/) — Portal tracking (web, not API)

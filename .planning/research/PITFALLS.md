@@ -1,295 +1,247 @@
-# Domain Pitfalls
+# Pitfalls Research
 
-**Domain:** Discord bot with LLM-powered channel summarization
-**Researched:** 2026-03-27
+**Domain:** Adding web-scraped college sports data (transfer portal, career stats) and role-gated list management to an existing Discord summary bot
+**Researched:** 2026-04-07
+**Confidence:** HIGH
 
 ## Critical Pitfalls
 
-Mistakes that cause rewrites or major issues.
+### Pitfall 1: Web Scraping Sources Break Without Warning
 
-### Pitfall 1: Message Content Intent Not Enabled
+**What goes wrong:**
+The bot scrapes transfer portal data or career stats from sites like 247sports.com or sports-reference.com. The site changes its HTML structure, adds Cloudflare protection, or starts returning 403s. The bot silently returns empty results or crashes. Users see "no players found" when the portal is actually full of entries.
 
-**What goes wrong:** The bot connects to Discord but `channel.history()` returns messages with empty `content` fields. Summaries come back blank or nonsensical. Everything looks like it works until you actually read the output.
-
-**Why it happens:** Since September 2022, `message_content` is a Privileged Intent. Without enabling it in both the Developer Portal AND in code (`intents.message_content = True`), the bot receives message objects but the `content`, `embeds`, `attachments`, and `components` fields are empty. Developers test locally, see it working (because they have the intent toggled on in the portal from a previous project), and forget to document or verify it.
-
-**How to avoid:**
-- Enable Message Content Intent in the Discord Developer Portal under Bot settings
-- Explicitly set `intents.message_content = True` in code
-- Add a startup check that fetches one recent message and asserts `content` is non-empty
-- Document this as a setup requirement in the README
-
-**Warning signs:** Summaries are empty or say "no messages found" when the channel clearly has activity. LLM returns generic responses because it received no actual content.
-
-**Phase to address:** Phase 1 (initial bot setup). This is a day-one configuration issue.
-
-**Confidence:** HIGH -- well-documented in discord.py docs and Discord Developer Portal.
-
----
-
-### Pitfall 2: Token Limit Overflow on Busy Channels
-
-**What goes wrong:** A busy channel generates 500-3000 messages overnight. Naively concatenating all messages and sending them to an LLM exceeds the context window, causing API errors, truncated summaries that miss the second half of the night, or massive API bills.
-
-**Why it happens:** Developers build with quiet test channels (20-50 messages) and never test with realistic volume. An overnight window (10pm-9am, 11 hours) in an active server can easily produce thousands of messages. At ~15-30 tokens per message (username + content), 2000 messages = 30,000-60,000 tokens of input alone.
+**Why it happens:**
+College sports sites have no obligation to maintain scrapable HTML. 247sports uses Cloudflare bot detection. Sports-Reference.com explicitly blocks scrapers exceeding 20 requests/minute and jails sessions for an hour on violation. Sites redesign constantly during peak transfer portal windows (April-May for basketball, December-January for football). Developers test against today's HTML and assume it will stay stable.
 
 **How to avoid:**
-- Implement a chunking strategy from the start: split messages into groups that fit within ~70% of the model's context window (leaving room for system prompt + output)
-- Use a map-reduce approach: summarize each chunk, then summarize the summaries
-- Count tokens before sending (use tiktoken for OpenAI, or a simple word-count heuristic as ~1.3 tokens per word)
-- Set a hard cap on messages processed (e.g., 2000 messages max) with a user-facing note when truncated
+- Build a scraping abstraction layer: each data source gets its own module with a `fetch()` method returning normalized data models. When HTML changes, only one module needs updating.
+- Implement response validation: if the parsed result has zero players when it previously had many, flag it as a likely scraping failure rather than "no data."
+- Add a staleness check: if the last successful scrape was more than N hours ago, alert the admin rather than silently serving stale data.
+- Cache successful results so users still get data (marked as "last updated X hours ago") when scraping temporarily fails.
+- Set proper User-Agent headers and respect robots.txt. Sports-Reference.com specifically bans scrapers that don't identify themselves.
 
-**Warning signs:** LLM API returns 400 errors about context length. Summaries suspiciously only cover early-evening topics but never late-night ones. API costs spike unexpectedly.
+**Warning signs:**
+Commands return empty results that previously worked. HTTP 403/429 status codes in logs. Parsing returns None or empty lists without raising errors.
 
-**Phase to address:** Phase 1/2 (core summarization logic). This must be designed into the summarization pipeline from the start, not bolted on later.
-
-**Confidence:** HIGH -- fundamental LLM integration constraint. Sources: [Deepchecks: 5 Approaches to Solve LLM Token Limits](https://www.deepchecks.com/5-approaches-to-solve-llm-token-limits/), [Agenta: Top Techniques to Manage Context Length](https://agenta.ai/blog/top-6-techniques-to-manage-context-length-in-llms).
+**Phase to address:**
+Phase 1 (data source foundation). The abstraction layer and error handling must be designed before any scraping code is written.
 
 ---
 
-### Pitfall 3: Silent Embed Truncation
+### Pitfall 2: JSON File Corruption on Concurrent Writes
 
-**What goes wrong:** Discord silently truncates embed descriptions that exceed 4096 characters (or 6000 total across all embed fields). The summary gets cut off mid-sentence with no error raised. The bot appears to work but users get incomplete summaries.
+**What goes wrong:**
+Two users add players to the KU recruiting list at the same time. Both reads happen before either write completes. The second write overwrites the first user's addition. Or worse: a write fails mid-operation (bot crash, disk full) and the JSON file is left in a partial/corrupt state -- all recruiting data is lost.
 
-**Why it happens:** The Discord API does not return an error when embed content is too long -- it just truncates. Developers send the LLM response directly into an embed without checking length. The 6000-character total limit applies across ALL fields in ALL embeds in a single message, which is a non-obvious constraint.
+**Why it happens:**
+The existing bot uses a `register_X_command(bot)` pattern where commands are closures that capture the bot instance. In an async context, two `/recruit add` commands can interleave: both read the JSON file, both get the same data, both write back with only their own addition. Python's asyncio is single-threaded but yields at every `await` -- so `await file.read()` followed by `await file.write()` is NOT atomic. The v1.0 bot has no JSON persistence in its codebase yet (DM subscriber opt-ins are mentioned in PROJECT.md but not implemented), so there's no existing safe pattern to follow.
 
 **How to avoid:**
-- Always validate summary length before sending
-- If the summary exceeds 4000 characters (leave margin), split into multiple embeds or multiple messages
-- Instruct the LLM to keep summaries concise (set `max_tokens` and include length constraints in the prompt)
-- Implement a `split_embed()` utility that breaks content at logical points (paragraph/bullet boundaries, not mid-word)
+- Keep the authoritative data in memory (a dict/list on the bot instance), not on disk. Load from JSON on startup, write to JSON as a backup after mutations.
+- Use an `asyncio.Lock` to serialize all write operations to the recruiting list.
+- Write to a temporary file first, then atomically rename it over the original (`os.replace()` is atomic on most OS). This prevents corruption from partial writes.
+- Keep a backup: before each write, copy the current file to `recruiting_data.backup.json`.
+- Validate JSON on load: if the file is corrupt, fall back to the backup.
 
-**Warning signs:** Summaries end abruptly. Users report "the summary seems incomplete." No errors in bot logs.
+**Warning signs:**
+Players disappear from the list after being added. JSON decode errors in logs. File contains truncated JSON.
 
-**Phase to address:** Phase 1 (message sending logic). Build the embed splitter as a utility from day one.
-
-**Confidence:** HIGH -- documented Discord API limit. Source: [Discord Embed Limits](https://www.pythondiscord.com/pages/guides/python-guides/discord-embed-limits/).
+**Phase to address:**
+Phase 1 (persistence layer). Build the safe read/write pattern as a utility before any feature uses it.
 
 ---
 
-### Pitfall 4: Slash Command Sync Confusion
+### Pitfall 3: Slash Command Bloat Breaking Command Sync
 
-**What goes wrong:** Developer registers slash commands but they never appear in Discord. Or old commands persist after being removed from code. Or commands work in the test server but not in production.
+**What goes wrong:**
+Adding 4-6 new slash commands (portal lookup, recruit add, recruit remove, recruit list, career stats, possibly more) to the existing 2 commands requires a re-sync. The new commands don't appear, or the old commands disappear. Guild command limit is 100, but the real issue is the sync itself -- it can fail silently, partially succeed, or hit rate limits if called too aggressively.
 
-**Why it happens:** discord.py requires explicit `CommandTree.sync()` calls to register slash commands with Discord. Global commands can take up to an hour to propagate. Guild-specific commands are instant but scoped. Developers often call `sync()` on every startup (which hits rate limits) or never call it (commands never appear). The bot must also be invited with the `applications.commands` scope.
+**Why it happens:**
+The existing bot syncs in `setup_hook()` with `tree.copy_global_to(guild=guild)` followed by `tree.sync(guild=guild)`. This pattern re-registers ALL commands every startup. Adding new command modules requires them to be registered BEFORE `setup_hook()` runs `tree.sync()`. If a new command module has a syntax error or import failure, it silently fails to register while the rest of the bot starts up. The developer sees the bot online but the new commands are missing.
 
 **How to avoid:**
-- Use guild-specific sync during development (instant), global sync for production
-- Create a manual sync command (owner-only) rather than syncing on every `on_ready`
-- Verify the bot invite URL includes the `applications.commands` scope
-- Never sync in `on_ready` without a guard (it fires on reconnects too, causing redundant syncs)
+- Register all new commands in `setup_hook()` before the `tree.sync()` call, following the existing pattern (`register_summary_command`, `register_post_summary_command`, then the new ones).
+- Add a startup log line that lists all registered commands by name so you can verify the count matches expectations.
+- Test command registration in isolation before integrating: import the registration function and verify it adds the expected commands to the tree.
+- If moving to Cogs later (which the bot does NOT currently use), do it as a dedicated refactoring phase, not mixed in with feature work.
 
-**Warning signs:** Commands don't appear in Discord's slash command autocomplete. "This interaction failed" errors. Commands appear in one server but not another.
+**Warning signs:**
+New commands don't appear in Discord's autocomplete. Old commands stop working after adding new ones. Bot starts but logs show fewer synced commands than expected.
 
-**Phase to address:** Phase 1 (bot scaffolding). Get sync right from the start.
-
-**Confidence:** HIGH -- extensively documented issue. Source: [discord.py slash command guide](https://gist.github.com/AbstractUmbra/a9c188797ae194e592efe05fa129c57f).
+**Phase to address:**
+Phase 1 (first new command). Verify the registration pattern works for new commands before building all of them.
 
 ---
 
-### Pitfall 5: Timezone and DST Scheduling Bugs
+### Pitfall 4: Scraping Blocks the Event Loop
 
-**What goes wrong:** The 9am daily summary fires at the wrong time, fires twice, or skips entirely when daylight saving time transitions occur. During spring-forward, 2:00-2:59 AM doesn't exist; during fall-back, 1:00-1:59 AM happens twice.
+**What goes wrong:**
+A user runs `/portal basketball kansas` and the bot freezes for 5-15 seconds while it scrapes and parses an external website. During this time, all other commands and the scheduled summary are blocked. If the external site is slow or down, the freeze can last 30+ seconds or until timeout.
 
-**Why it happens:** Developers use naive datetime objects or pytz (deprecated since Python 3.9) instead of `zoneinfo`. APScheduler's cron trigger with DST-observing timezones can cause jobs to execute unexpectedly during transitions. The 10pm-9am overnight window spans midnight, adding another edge case.
+**Why it happens:**
+Developers use `requests` (synchronous) or even `urllib` for HTTP calls out of habit. Or they use `aiohttp` correctly but call a synchronous HTML parser (like BeautifulSoup with a large document) without yielding. discord.py runs on a single asyncio event loop -- any blocking call freezes the entire bot.
 
 **How to avoid:**
-- Use `zoneinfo` (stdlib since Python 3.9), not pytz
-- Store the configured timezone as a string, create `ZoneInfo` objects at runtime
-- For APScheduler, be aware that DST transitions can cause missed or double firings -- the 9am trigger is safe (DST transitions typically happen at 2am) but document the assumption
-- Store all internal timestamps in UTC; convert to local time only for display and scheduling
-- Use discord.py's built-in `tasks.loop` with `time=` parameter as an alternative to APScheduler for simple daily schedules
+- Use `aiohttp` (already a dependency of discord.py) for all HTTP requests. Never import `requests`.
+- For HTML parsing with BeautifulSoup, if the document is large, run the parse in a thread executor: `await asyncio.get_event_loop().run_in_executor(None, parse_function, html)`.
+- Set HTTP request timeouts (10 seconds max). Better to fail fast than block the bot.
+- Defer the slash command interaction immediately before any scraping begins (the existing bot already follows this pattern for `/summary`).
 
-**Warning signs:** Summary posted at 8am or 10am after a clock change. Two summaries posted on the same day. Summary never fires after a deployment that happened near a DST boundary.
+**Warning signs:**
+Bot becomes unresponsive while scraping is in progress. Other users' commands time out with "This interaction failed." Scheduled tasks fire late.
 
-**Phase to address:** Phase 2 (scheduling). Decide on scheduling approach early and test with mocked time.
-
-**Confidence:** HIGH -- well-known scheduling issue. Source: [APScheduler timezone issue #315](https://github.com/agronholm/apscheduler/issues/315).
-
----
-
-## Moderate Pitfalls
-
-### Pitfall 6: Rate Limiting During Message Fetching
-
-**What goes wrong:** Fetching history from a busy channel requires pagination (100 messages per API call). For 2000 messages, that is 20 sequential API requests. If the bot also fetches from multiple channels, it can hit Discord's rate limits (50 requests/second global, but per-route limits are lower), causing 429 errors and slow or failed summary generation.
-
-**Prevention:**
-- Use `channel.history(limit=N)` which handles pagination internally in discord.py, but set reasonable limits
-- Fetch channels sequentially, not in parallel
-- Add a configurable message limit per channel (e.g., 1500 messages max)
-- Log when rate limits are hit so you can tune the limits
-- discord.py handles 429s with automatic retry, but high-volume fetches can still cause delays of 30-60 seconds
-
-**Phase to address:** Phase 1 (message fetching). Design with limits from the start.
-
-**Confidence:** HIGH -- documented in Discord API rate limit docs.
+**Phase to address:**
+Phase 1 (HTTP client setup). Establish the async HTTP pattern in the first scraping module and reuse it everywhere.
 
 ---
 
-### Pitfall 7: LLM API Costs Spiraling Uncontrolled
+### Pitfall 5: Transfer Portal Data Is Ephemeral and Inconsistent
 
-**What goes wrong:** Each overnight summary processes thousands of messages through an LLM. Without cost controls, a busy server could cost $1-5 per summary (depending on model and message volume), adding up to $30-150/month for a single bot in a single server.
+**What goes wrong:**
+A user looks up the transfer portal for Kansas basketball. The bot returns a list. An hour later, the same query returns different results -- not because someone transferred, but because the source site updated its data, restructured the page, or the bot scraped a cached/stale version. Users report "the bot is wrong" when it's actually the source data that's in flux.
 
-**Prevention:**
-- Count tokens before sending and log the count
-- Set `max_tokens` on output to prevent verbose responses
-- Use a cheaper model for summarization (GPT-4o-mini, Claude Haiku) -- summarization doesn't need the most powerful model
-- Implement a message cap and inform users when it's hit
-- Cache summaries so repeated requests for the same time window don't re-invoke the LLM
-- Add per-day and per-month cost tracking with alerts
+**Why it happens:**
+Transfer portal data is inherently volatile during portal windows. Players enter and withdraw daily. Different sources (247sports, On3, ESPN) disagree on who is "in" the portal at any given moment. There is no canonical API -- these are journalism sites with editorial judgment about what to list. The NCAA's official portal is not publicly accessible via API.
 
-**Phase to address:** Phase 2 (after basic summarization works). But design the interface to accept cost parameters from the start.
+**How to avoid:**
+- Always display "Data from [source] as of [timestamp]" on every portal response. Make the source and freshness visible to users.
+- Cache results with a reasonable TTL (15-30 minutes for portal data, longer for career stats which change less often).
+- Don't present scraped data as authoritative fact. Frame it as "according to [source]."
+- Pick ONE primary source per data type rather than trying to aggregate multiple sources (aggregation multiplies scraping complexity and inconsistency).
+- Store the last successful scrape so the bot can serve stale-but-present data with a warning rather than failing entirely.
 
-**Confidence:** MEDIUM -- cost varies heavily by provider and usage. Source: [LLM Cost Optimization Guide](https://blog.premai.io/llm-cost-optimization-8-strategies-that-cut-api-spend-by-80-2026-guide/).
+**Warning signs:**
+Users questioning data accuracy. Different results on repeated queries within short time spans. Arguments in the Discord about whether the bot is "right."
 
----
-
-### Pitfall 8: Noise in Summaries (Bot Messages, Reactions, Low-Quality Content)
-
-**What goes wrong:** The summary includes bot command outputs, automated messages, emoji-only messages, "lol" and "same" one-word replies, and other noise. The resulting summary is cluttered and unhelpful.
-
-**Prevention:**
-- Filter out bot messages (`message.author.bot`)
-- Filter out system messages (joins, boosts, pins)
-- Filter messages shorter than a threshold (e.g., under 5 characters)
-- Consider filtering messages that are purely emoji or URLs with no commentary
-- Include filtering rules in the prompt: "Ignore trivial messages, focus on substantive discussion"
-
-**Phase to address:** Phase 1 (message fetching/preprocessing). Build the filter pipeline before connecting to the LLM.
-
-**Confidence:** HIGH -- directly mentioned in summarization project post-mortems. Source: [Alibaba: How to Run a Local LLM That Summarizes Discord](https://www.alibaba.com/product-insights/how-to-run-a-local-llm-that-summarizes-discord-server-threads-respecting-privacy-ignoring-bots-highlighting-actionable-decisions.html).
+**Phase to address:**
+Phase 1 (data source selection) and Phase 2 (caching layer). Source selection is a design decision; caching is implementation.
 
 ---
 
-### Pitfall 9: Slash Command Interaction Timeout (3-Second Rule)
+### Pitfall 6: Role-Gated Access Implemented Wrong
 
-**What goes wrong:** Discord requires an initial response to a slash command within 3 seconds. LLM summarization takes 5-30 seconds. The interaction expires, the user sees "This interaction failed," and then the bot posts the summary as a regular message that looks disconnected.
+**What goes wrong:**
+The `/recruit add` command should be restricted to authorized users, but the check is implemented incorrectly -- either too permissive (anyone can add/remove players) or too restrictive (even admins can't use it). Or the check works in testing but fails in production because Discord role IDs differ between the test server and production server.
 
-**Prevention:**
-- Use `interaction.response.defer()` immediately upon receiving the command -- this buys you 15 minutes to send a followup
-- Show a "Generating summary..." deferred response, then edit it with the actual summary via `interaction.followup.send()`
-- Never do any I/O (message fetching, LLM calls) before deferring
+**Why it happens:**
+The existing bot uses `ADMIN_USER_IDS` (user IDs in env vars) for admin gating on `/post-summary`. But the v1.1 requirements say "role-gated" for recruiting list management, which implies Discord roles, not hardcoded user IDs. Mixing the two patterns creates confusion. Discord role IDs are server-specific, so a role-based check needs the guild's actual role IDs, not a hardcoded list. Developers test with their own admin account and never test the "unauthorized user" path.
 
-**Phase to address:** Phase 1 (slash command handler). This is the first thing the command handler should do.
+**How to avoid:**
+- Decide early: use the existing `ADMIN_USER_IDS` pattern (simpler, matches v1.0) OR use Discord role IDs in config (more flexible but requires new config). Do not mix both.
+- If using roles, make the authorized role ID(s) a config setting (`RECRUIT_MANAGER_ROLE_IDS`), not hardcoded.
+- Use discord.py's `app_commands.checks` or `default_permissions` decorator for the slash command itself, matching the existing `is_admin()` pattern in `post_summary.py`.
+- Test both the authorized AND unauthorized paths. The existing `/post-summary` error handler pattern is a good template.
 
-**Confidence:** HIGH -- fundamental Discord interaction constraint.
+**Warning signs:**
+"You don't have permission" errors for users who should have access. No permission errors for users who should NOT have access. The check works locally but not after deployment.
 
----
-
-## Minor Pitfalls
-
-### Pitfall 10: `on_ready` Fires Multiple Times
-
-**What goes wrong:** Code in `on_ready` (like scheduling setup or command sync) runs multiple times because `on_ready` fires on every reconnect, not just initial startup.
-
-**Prevention:** Use a boolean flag (`self.synced = False`) and check it in `on_ready`. Or use `setup_hook()` which runs exactly once.
-
-**Phase to address:** Phase 1 (bot lifecycle).
-
----
-
-### Pitfall 11: No Graceful Error Handling for LLM API Failures
-
-**What goes wrong:** The LLM API is down or returns an error, and the scheduled summary silently fails. Nobody notices until someone asks "where's the morning summary?"
-
-**Prevention:**
-- Wrap all LLM calls in try/except with retry logic (exponential backoff, max 3 retries)
-- On final failure, post a message to the summary channel: "Summary generation failed. Will retry in 15 minutes."
-- Log all failures with enough context to debug
-
-**Phase to address:** Phase 2 (robustness).
-
----
-
-### Pitfall 12: No Message History When Bot Joins After Activity
-
-**What goes wrong:** The bot can only read messages that exist in the channel history. If the channel was created or messages were sent before the bot had the Read Message History permission, those messages may not be accessible. Also, deleted messages won't appear in history.
-
-**Prevention:**
-- Document this limitation for users
-- Handle the case where `channel.history()` returns fewer messages than expected
-- Don't assume message count = time coverage
-
-**Phase to address:** Phase 1 (documentation and edge case handling).
+**Phase to address:**
+Phase 2 (recruiting list commands). Define the access model before implementing the commands.
 
 ---
 
 ## Technical Debt Patterns
 
-| Pattern | How It Starts | How It Hurts | Prevention |
-|---------|--------------|--------------|------------|
-| Hardcoded LLM prompts | "Just get it working" | Can't tune summary quality without code changes | Store prompts in config/env from day one |
-| No message preprocessing | Send raw messages to LLM | Wasted tokens on noise, poor summaries | Build a filter/transform pipeline before LLM integration |
-| Monolithic bot file | Single `bot.py` with everything | Can't test summarization logic independently | Separate into: bot layer, message fetcher, summarizer, formatter |
-| No token counting | "The model handles it" | Silent truncation or 400 errors in production | Count tokens before every LLM call |
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Hardcoding the scraping source URL | Works immediately | URL changes = bot breaks, no way to switch sources without code change | Never -- put base URLs in config |
+| Storing scraped HTML in cache instead of parsed data | Faster to implement | Re-parsing on every cache hit, larger cache, HTML changes break cached data | Never -- always cache the parsed/normalized data model |
+| Skipping the persistence abstraction | Fewer files to write | Every new feature that needs persistence re-invents file I/O with its own bugs | Never -- build the JSON read/write utility once |
+| Not normalizing player names | Scraping "works" | "De'Aaron Fox" vs "DeAaron Fox" vs "De'aaron fox" causes duplicate entries and failed lookups | MVP only -- normalize before v1.1 ships |
+| Using `bot.tree.command()` closures for all new commands | Matches v1.0 pattern | 6+ commands in closures makes `client.py` and `setup_hook()` unwieldy | Acceptable for v1.1 but plan a Cog refactor for v1.2 |
 
 ## Integration Gotchas
 
-| Integration Point | Gotcha | Mitigation |
-|-------------------|--------|------------|
-| Discord API + Message History | `channel.history(after=datetime)` requires UTC-aware datetime. Naive datetimes silently misbehave. | Always pass `datetime.datetime.now(datetime.timezone.utc)` or use `discord.utils.utcnow()` |
-| Discord API + Embeds | Embed field values cannot be empty strings. Sending `value=""` raises HTTPException. | Always validate embed fields are non-empty before sending |
-| LLM API + Streaming | Streaming responses need different handling than complete responses. Switching later requires refactoring. | Design the summarizer interface to return complete text; add streaming later if needed |
-| APScheduler + discord.py event loop | APScheduler's AsyncIOScheduler must share the same event loop as discord.py. Starting it before `bot.run()` or in a separate thread causes errors. | Start scheduler inside `setup_hook()` or `on_ready` (with guard). Or prefer discord.py's `tasks.loop`. |
-| discord.py + Python 3.12+ | Some older discord.py versions had compatibility issues with Python 3.12. | Use discord.py >= 2.3.0 with Python 3.11 or 3.12. Check compatibility before picking versions. |
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| aiohttp + external sports sites | Not setting a User-Agent header, getting blocked as a bot | Set `User-Agent` to a descriptive string; respect `robots.txt` |
+| aiohttp + Cloudflare-protected sites | Expecting raw HTML back, getting a JS challenge page instead | Detect Cloudflare challenge responses (check for `cf-` headers or challenge page markers) and fail gracefully with a user-facing message |
+| BeautifulSoup + asyncio | Calling `BeautifulSoup(html, 'html.parser')` synchronously in an async function | For large documents, run parsing in `run_in_executor()`. For small pages (< 100KB), synchronous is fine since parsing is CPU-bound and fast |
+| JSON persistence + bot shutdown | Data in memory never written to disk if bot crashes | Write after every mutation, not just on shutdown. Use atomic writes (`write temp + rename`) |
+| New commands + existing `setup_hook()` | Adding imports/registration calls to `setup_hook()` in wrong order | New `register_X_command(bot)` calls must come BEFORE `tree.sync()`. Follow existing ordering pattern |
+| Discord embeds + scraped data | Putting raw scraped text (with HTML entities, weird formatting) into embed fields | Sanitize and normalize all scraped text before embedding. Strip HTML tags, decode entities, limit field lengths |
 
 ## Performance Traps
 
-| Trap | Impact | Solution |
-|------|--------|---------|
-| Fetching all messages into memory at once | Memory spike on busy channels (2000+ messages = significant memory) | Use async iteration with `channel.history()` and process in batches |
-| Not setting LLM `max_tokens` | Model generates 2000-token summaries when 500 tokens suffice | Set `max_tokens=800` and instruct the model to be concise |
-| Synchronous LLM calls blocking the bot | Bot stops responding to commands while generating a summary | Use `asyncio`-compatible HTTP client (aiohttp/httpx) for LLM API calls; never use blocking `requests` |
-| Re-summarizing the same time window | User runs `/summary` twice for the same period, doubling LLM costs | Cache summaries keyed by (channel_id, start_time, end_time) with a short TTL |
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| Scraping on every command invocation | Bot takes 5-10 seconds per portal lookup; external site rate-limits the bot | Cache scrape results with a 15-30 minute TTL. Serve from cache, scrape in background | Immediately -- even with 2-3 users hitting the command |
+| Loading the entire JSON file for every read | Noticeable for small files but degrades with 100+ players in the recruiting list | Keep data in memory, persist to disk only on writes | At 500+ entries (unlikely for KU recruiting, but the pattern matters) |
+| No request deduplication | Two users run `/portal basketball kansas` simultaneously, triggering two identical scrapes | Use an `asyncio.Lock` per (source, query) to coalesce concurrent identical requests | First time two users query the same thing |
+| Parsing full player career stats pages when only summary stats are needed | Unnecessary HTTP requests and parse time for detailed stats pages | Scrape summary/overview pages first; only fetch detailed stats on explicit user request | When career stats pages are 200KB+ of HTML |
 
 ## Security Mistakes
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Bot token in source code | Token leaked via git = bot hijacked | Use `.env` file + `python-dotenv`, add `.env` to `.gitignore` immediately |
-| LLM API key in source code | Same as above but for LLM provider | Same: `.env` file, never commit secrets |
-| Sending private channel messages to LLM API | User messages leave your infrastructure, potential privacy violation | Document which channels are summarized; consider a channel allowlist in config |
-| No input sanitization in summaries | Malicious users craft messages that inject instructions into the LLM prompt | Wrap user messages in clear delimiters in the prompt; don't let message content break out of the "messages to summarize" section |
-| Logging full message content | Debug logs contain private user conversations | Log message IDs and metadata only; never log full message content in production |
+| Storing scraped data with unsanitized HTML in JSON files | If data is later displayed or processed, could contain unexpected content | Strip all HTML tags and entities before storing. Use `html.unescape()` then remove tags |
+| Not validating user input in slash command parameters (player name, school name) | Injection into scraping URLs or file paths | Use discord.py's `Choices` for constrained inputs (sport, school). For free-text (player name), sanitize and URL-encode before using in requests |
+| Serving stale cached data without indication | Users make decisions (recruiting interest, transfer monitoring) based on outdated information | Always display data freshness timestamp. Mark stale data visually (different embed color, warning text) |
+| Logging scraped content including player personal information | Potential exposure of PII if logs are shared or leaked | Log scrape success/failure metadata only, not the actual player data |
+
+## UX Pitfalls
+
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| Returning raw scraped data without formatting | Wall of text, hard to scan, looks amateurish | Format as Discord embeds with fields: Player Name, Position, Previous School, Stats. Use inline fields for compact display |
+| No feedback during slow scrape operations | User thinks the bot is broken after 5 seconds of silence | Defer immediately, then edit with "Fetching transfer portal data..." status before the actual scrape |
+| Not handling "no results" distinctly from "scraping failed" | User can't tell if there are genuinely no Kansas players in the portal or if the bot is broken | Explicit messages: "No Kansas basketball players currently in the transfer portal" vs "Could not fetch portal data -- try again later" |
+| Showing ALL portal entries in one response | 50+ players for a popular school creates a massive embed that's hard to read | Paginate results (10-15 per page) with reaction-based or button navigation. Or filter by position |
+| Requiring exact name matches for player lookups | "Jalen" doesn't match "Jalen Wilson" -- user gives up | Implement fuzzy matching or substring search. Display "Did you mean...?" for close matches |
+| Career stats with no context | Raw numbers are meaningless without context (games played, averages vs totals) | Always show per-game averages alongside totals. Include games played count |
 
 ## "Looks Done But Isn't" Checklist
 
-These items are commonly skipped during development but cause problems in real usage:
+- [ ] **Transfer portal lookup:** What happens when the source site is down? Verify it shows an error message, not an empty list that implies no one is in the portal
+- [ ] **Transfer portal lookup:** Does it handle schools with no players in the portal? Verify "no players found" message appears, not a crash
+- [ ] **Recruiting list add:** What happens when adding a player who already exists? Verify duplicate detection by normalized name
+- [ ] **Recruiting list remove:** What happens when removing a player not on the list? Verify graceful "player not found" response
+- [ ] **Recruiting list persistence:** Restart the bot and verify the list survives. Then kill the bot process (SIGKILL) and verify the list survives
+- [ ] **Career stats lookup:** What happens when a player's stats page doesn't exist or has no college stats? Verify graceful handling
+- [ ] **Career stats lookup:** Does it work for both basketball AND football? The stats page structure is completely different between sports
+- [ ] **Sport parameter:** Is the sport parameter validated? What happens if someone passes "hockey"?
+- [ ] **Embed field limits:** Embed fields have a 1024-character value limit (not just the 4096 description limit). Stats tables can easily exceed this
+- [ ] **Concurrent scraping:** What happens if `/portal` is called 10 times in 30 seconds? Verify caching prevents 10 simultaneous scrapes
+- [ ] **JSON file on first run:** Does the bot handle the case where the JSON file doesn't exist yet? Verify it creates the file rather than crashing
 
-- [ ] **Empty channel handling** -- What happens when the overnight window has zero messages? (Should post "No activity" rather than sending empty input to the LLM)
-- [ ] **Single message handling** -- What if there's only 1 message? (Don't waste an LLM call; just repost it)
-- [ ] **Summary of summaries** -- If the bot's own summary messages are in the channel, does it summarize its own summaries on the next run? (Filter by bot author ID)
-- [ ] **Long messages** -- A single message can be up to 2000 characters. Ten long messages = 20K characters before you even think about token limits.
-- [ ] **Threads and forums** -- Does `channel.history()` include thread messages? (No -- threads are separate. Decide if you want to summarize them.)
-- [ ] **Message edits** -- `channel.history()` returns the latest version. Edited messages are fine, but deleted messages are gone.
-- [ ] **Attachments and images** -- Messages with only images and no text appear as empty content. Filter or note them.
-- [ ] **Mentions and formatting** -- Raw messages contain `<@123456789>` for mentions and `<#channel_id>` for channels. These are meaningless in a summary. Resolve them to display names.
-- [ ] **Connection loss recovery** -- If the bot disconnects and reconnects, does the scheduler still fire? Does it double-fire?
-- [ ] **Overnight window edge case** -- 10pm-9am spans two calendar days. The `after` and `before` parameters in `channel.history()` must account for this correctly.
-- [ ] **DM summary delivery** -- Discord rate-limits DMs aggressively. If many users request DM delivery, the bot will hit rate limits. Queue and stagger DM sends.
+## Recovery Strategies
 
-## Phase-Specific Warnings
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| Scraping source breaks (HTML change) | LOW | Update the parsing selectors in the source module. Cached data continues serving until fix is deployed |
+| JSON file corrupted | LOW (if backups exist) / HIGH (if not) | Restore from `.backup.json`. If no backup, manually recreate from memory or logs. Prevention is far cheaper |
+| Wrong data displayed (stale cache) | LOW | Clear cache, re-scrape. Users may need to be told the previous data was stale |
+| Command sync broken (new commands missing) | LOW | Run manual sync via owner command or restart bot. Check import errors in logs |
+| Rate-limited by scraping source | MEDIUM | Wait for rate limit to expire (1 hour for Sports-Reference). Serve cached data. Reduce scrape frequency |
+| Event loop blocked by synchronous scraping | LOW | Fix the blocking call to async. Restart bot. No data loss |
 
-| Phase Topic | Likely Pitfall | Mitigation |
-|-------------|---------------|------------|
-| Bot scaffolding | Message Content Intent not enabled | Startup self-test that verifies message content is accessible |
-| Slash commands | Sync issues, 3-second timeout | Defer immediately, use guild sync for dev |
-| Message fetching | Rate limits, UTC datetime confusion | Use `discord.utils.utcnow()`, set reasonable limits |
-| LLM integration | Token overflow, no error handling | Chunking strategy, retry logic, token counting |
-| Prompt engineering | Noisy summaries, inconsistent format | Message preprocessing, structured prompts with examples |
-| Scheduling | DST bugs, double-firing on reconnect | Use `zoneinfo`, guard `on_ready`, prefer `tasks.loop` |
-| Embed formatting | Silent truncation, empty fields | Validate length, split utility, test with long output |
-| Cost management | Uncontrolled API spending | Token counting, model selection, caching |
+## Pitfall-to-Phase Mapping
+
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| Scraping sources break | Phase 1 (data source abstraction) | Each source module has a `fetch()` returning a typed data model, with error handling tested |
+| JSON file corruption | Phase 1 (persistence utility) | Write utility has atomic writes + backup. Test concurrent writes with asyncio.Lock |
+| Slash command sync issues | Phase 1 (first new command) | Log output shows correct command count after sync |
+| Blocking event loop | Phase 1 (HTTP client setup) | All HTTP calls use aiohttp. No `import requests` in codebase |
+| Data inconsistency/staleness | Phase 2 (caching layer) | Every response includes source and timestamp. Stale data flagged visually |
+| Role-gated access wrong | Phase 2 (recruiting commands) | Both authorized and unauthorized paths tested. Config-driven, not hardcoded |
+| Portal data ephemeral | Phase 2 (user-facing responses) | "Data from [source] as of [time]" on every embed |
+| Embed field overflow | Phase 2 (formatting) | Stats and player lists paginated. Field values checked against 1024 char limit |
+| No results vs scrape failure | Phase 2 (error messaging) | Distinct error messages for empty results vs fetch failures |
+| Player name matching | Phase 3 (polish) | Fuzzy/substring matching. Normalized names in storage |
 
 ## Sources
 
-- [Discord Developer Portal: Message Content Privileged Intent FAQ](https://support-dev.discord.com/hc/en-us/articles/4404772028055-Message-Content-Privileged-Intent-FAQ)
-- [discord.py Intents Primer](https://discordpy.readthedocs.io/en/latest/intents.html)
-- [discord.py Slash Command Guide (AbstractUmbra)](https://gist.github.com/AbstractUmbra/a9c188797ae194e592efe05fa129c57f)
-- [Discord API Rate Limits](https://discord.com/developers/docs/topics/rate-limits)
-- [Python Discord: Embed Limits](https://www.pythondiscord.com/pages/guides/python-guides/discord-embed-limits/)
-- [APScheduler Timezone Issue](https://github.com/agronholm/apscheduler/issues/315)
-- [Deepchecks: 5 Approaches to Solve LLM Token Limits](https://www.deepchecks.com/5-approaches-to-solve-llm-token-limits/)
-- [LLM Cost Optimization Guide](https://blog.premai.io/llm-cost-optimization-8-strategies-that-cut-api-spend-by-80-2026-guide/)
-- [discord.py Rate Limit Issue #5806](https://github.com/Rapptz/discord.py/issues/5806)
+- [Sports-Reference.com bot traffic policy](https://www.sports-reference.com/bot-traffic.html) -- 20 req/min limit, 1-hour jail
+- [Sports-Reference.com data use policy](https://www.sports-reference.com/data_use.html) -- explicit restrictions on scraping
+- [247sports transfer portal pages](https://247sports.com/season/2026-basketball/transferportal/) -- Cloudflare-protected
+- [NCAA API (henrygd)](https://github.com/henrygd/ncaa-api) -- free API for NCAA.com data, 5 req/sec limit
+- [discord.py Cogs documentation](https://discordpy.readthedocs.io/en/stable/ext/commands/cogs.html) -- for future refactoring
+- [discord.py slash command guide](https://gist.github.com/AbstractUmbra/a9c188797ae194e592efe05fa129c57f) -- sync patterns
+- [Discord rate limit documentation](https://discord.com/developers/docs/topics/rate-limits)
+- [Async web scraping guide 2026](https://dev.to/vhub_systems_ed5641f65d59/async-web-scraping-in-python-asyncio-aiohttp-httpx-complete-2026-guide-2ae6)
+
+---
+*Pitfalls research for: v1.1 Athletics Intelligence features on existing Discord summary bot*
+*Researched: 2026-04-07*

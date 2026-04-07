@@ -1,143 +1,169 @@
 # Feature Landscape
 
-**Domain:** Discord channel summarization bot
-**Researched:** 2026-03-27
+**Domain:** College sports intelligence Discord bot (transfer portal, recruiting, career stats)
+**Researched:** 2026-04-07
+**Sports scope:** Men's college basketball (MBB) and men's college football (CFB)
+**Context:** v1.1 milestone features for an existing KU athletics Discord bot
 
 ## Table Stakes
 
-Features users expect from any Discord summarization bot. Missing any of these and users will switch to an existing solution (TLDRBot, Summary Bot, Wallubot, or Discord's native Summaries AI).
+Features users expect in a KU athletics Discord bot with recruiting/portal commands. Missing any of these and the commands feel incomplete or useless.
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| On-demand slash command summary (`/summary` or `/tldr`) | Every competitor has this. It is the core interaction. | Low | Single command, fetch messages, call LLM, return result. Already in project requirements. |
-| Configurable time range | Summary Bot offers `/fromtosummary`; Wallubot auto-detects timespan since user's last message. Users need to specify "last 2 hours" or "since yesterday." | Medium | Slash command options for duration. Parsing relative times ("2h", "1d") is straightforward. |
-| Bullet-point formatted output | Every bot returns structured bullet points or topic groupings. Raw paragraph summaries feel lazy. | Low | Prompt engineering concern, not code complexity. Already in project requirements. |
-| Discord embed formatting | All serious bots use rich embeds, not plain text. Embeds look professional and handle the 4096-char limit gracefully. | Low | discord.py Embed objects. Split into multiple embeds if summary exceeds limit. |
-| Scheduled/automatic summaries | Daily digest is standard. rauljordan/daily-discord-summarizer does 3-hour intervals. TLDRBot offers automatic summaries at intervals. | Medium | Async scheduler (discord.ext.tasks). Already in project requirements as the 9am overnight recap. |
-| Post to dedicated channel | Standard pattern to avoid cluttering discussion channels. | Low | Already in project requirements. Simple channel ID config. |
-| Multi-channel awareness | Bot should be able to summarize different channels, not just one hardcoded channel. Summary Bot and Wallubot both let users pick which channel to summarize. | Low | Slash command option to select target channel. Default to current channel. |
-| Message pagination | Discord API returns max 100 messages per request. Busy overnight channels can have hundreds of messages. Every working bot handles this. | Medium | Loop with `before` parameter until time window is covered. |
-| Token/length management | LLM context windows have limits; Discord embeds max 4096 chars for description. | Medium | Chunk messages if they exceed context window; split or truncate summary if over embed limit. |
-| Error handling for empty/low-activity periods | "Nothing notable happened" is a valid summary. Bots that return errors or hallucinate content when channels are quiet look broken. | Low | Check message count before calling LLM. Return a "no significant activity" message if below threshold. |
+| Feature | Why Expected | Complexity | Dependencies | Notes |
+|---------|--------------|------------|--------------|-------|
+| `/portal` command filtered by sport | Core use case -- "who's in the portal?" | Medium | Data source integration | Must support both MBB and CFB |
+| Portal results show player name, position, original school, star rating | Bare minimum useful data per player | Low | Portal data source | Users need enough context to evaluate a player |
+| `/recruit list` view command filtered by sport | Core use case -- "who are we tracking for KU?" | Low | JSON persistence (existing pattern) | Read-only for all users |
+| `/recruit add` and `/recruit remove` with admin gating | Admins curate the list; prevents spam entries | Medium | ADMIN_USER_IDS (existing), JSON file | Reuse admin gating pattern from `/post-summary` |
+| Recruit entry contains: name, position, previous school, star rating, sport | Minimum useful recruiting profile | Low | Pydantic models | Matches PROJECT.md spec exactly |
+| `/stats` command for players on the recruiting list | "Show me career stats for Player X" | High | Career stats data source, recruiting list | Requires reliable player-to-stats matching |
+| Embed-based output with consistent formatting | v1.0 established embed pattern; users expect it | Low | `formatting/embeds.py` (existing) | Reuse existing embed builder |
+| Error handling with admin alerting | v1.0 pattern; data source failures must not crash bot | Low | `alerting.py` (existing) | Reuse existing admin DM alerting |
 
 ## Differentiators
 
-Features that set the bot apart. Not expected, but valued. These move the bot from "yet another summary bot" to something users prefer.
+Features that make this bot genuinely useful beyond a basic lookup. Not expected, but valued.
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| Topic-grouped summaries | Discord's native Summaries AI groups by topic with participant lists. Most third-party bots return flat bullet lists. Grouping by topic makes long summaries scannable. | Medium | Prompt engineering to instruct LLM to cluster by topic. May need post-processing to format topic headers as separate embed fields. |
-| Action items / decisions extraction | elizaOS/discord-summarizer categorizes into Technical Tasks, Documentation Needs, Feature Requests. Optimum Web's bot extracts "key points, decisions made, action items, unresolved questions." High-value for project-oriented servers. | Medium | Separate prompt section or structured output from LLM. Format as distinct embed sections. |
-| Smart filtering (ignore bot spam, system messages) | Wallubot filters out bot messages and system noise. Reduces LLM token waste and improves summary quality significantly. | Low | Filter by `message.author.bot` and message type before sending to LLM. Simple but impactful. |
-| DM delivery option | Users who want personal catch-ups without posting in a channel. Already in project requirements. | Low | Send embed via DM instead of or in addition to channel post. |
-| Unread summary (`/unreadsummary`) | Summary Bot's most clever feature: summarize everything since the user's last message in that channel. Wallubot does this automatically with no parameters. Solves "what did I miss?" precisely. | Medium | Query user's last message timestamp in channel, then fetch messages after that point. |
-| Question-focused summaries | Wallubot's `question:` parameter lets users ask targeted questions about the conversation instead of getting a generic overview. Turns the bot into a conversational search tool. | Medium | Pass user's question as additional context to LLM alongside messages. More useful than it sounds. |
-| Thread output mode | Summary Bot's `/setthread` toggles between posting summary as a thread or inline message. Threads keep channels cleaner for long summaries. | Low | `create_thread()` on the summary message. Simple toggle. |
-| Participant attribution | Discord native Summaries AI shows who participated in each topic. Helps users know who to follow up with. | Medium | Track message authors per topic cluster. Include "@user" style attribution in output. |
-| Configurable summary language | Summary Bot has `/setlanguage`. Valuable for international communities. | Low | Pass language preference to LLM prompt. Store per-server preference. |
+| Feature | Value Proposition | Complexity | Dependencies | Notes |
+|---------|-------------------|------------|--------------|-------|
+| Portal filtering by position | "Show me all guards in the portal" narrows noise | Low | Portal data already has position field | Simple filter on existing data |
+| Portal filtering by conference | "Big 12 portal entries" useful for KU context | Medium | Need conference data per school | CFBD API has conference info for football |
+| Recruit list with last-updated timestamps | Shows how fresh the data is | Low | Add timestamp field to JSON entries | Builds trust in curated data |
+| Autocomplete for sport selection | discord.py `app_commands.Choice` -- cleaner UX than free text | Low | None beyond discord.py | Two choices: "basketball" and "football" |
+| Stats formatted in readable embed tables | Career PPG/RPG/APG for basketball; passing/rushing/receiving for football | Medium | Stats data source | Raw stat dumps are useless without formatting |
+| Pagination for large portal result sets | Portal can have 1000+ entries per sport | Medium | Discord UI buttons/views | discord.py has built-in View/Button support |
+| Cache layer for portal/stats data | Avoid hitting APIs on every command; portal data changes slowly | Medium | In-memory TTL cache | 15-30 min TTL is reasonable for portal data |
+| School name autocomplete | Type "Kan" and get "Kansas" suggested | Low-Medium | School name list from API | CFBD has school/team endpoints |
 
 ## Anti-Features
 
-Features to explicitly NOT build. These are tempting but wrong for a single-server self-hosted bot.
+Features to explicitly NOT build. Each has a clear reason.
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| Per-request pricing / token metering | This is a personal/single-server bot, not a SaaS product. TLDRBot charges $0.02/request because they host the LLM. We use the user's own API key. | Track token usage in logs for cost awareness, but do not gate features behind payments. |
-| Web dashboard for configuration | Explicitly out of scope per PROJECT.md. Adds massive complexity for a single-server bot. | Environment variables and optionally a `/config` slash command for runtime tweaks. |
-| Voice channel transcription + summary | NotesBot and Memolin do this, but it requires audio processing, speech-to-text, and is an entirely different problem domain. | Stay focused on text channels. Voice summary is a different project. |
-| Multi-server support | Out of scope per PROJECT.md. Adds database complexity, per-server config, sharding concerns. | Single-server config via env vars. Architecture should not preclude multi-server later, but do not build for it now. |
-| Real-time streaming summaries | Out of scope per PROJECT.md. Continuous summarization is expensive and noisy. | On-demand and scheduled summaries are the right interaction model. |
-| Visual/mind-map summaries | Mapify does this. Gimmick that adds image generation complexity with minimal value for a text-based Discord channel. | Bullet points and topic groupings are the right format for Discord. |
-| Auto-moderation integration | Some community management bots bundle summarization with spam detection. These are separate concerns. | Keep the bot single-purpose. Moderation is a different bot. |
-| Storing full message history in a database | Some bots (rauljordan's) store all messages locally. Adds storage management and privacy concerns. Unnecessary when Discord's API provides history access. | Fetch from Discord API on demand. Cache only during active summarization. |
-| Custom AI model hosting | Out of scope -- user brings their own API key for their preferred provider. | Provide pluggable interface, user configures provider and key. |
-| Role-based permissions | PROJECT.md says "any server member can use." Adding roles adds config burden for a single-server bot. | Let anyone use it. Can add via discord.py's built-in permission checks later if needed. |
+| Real-time portal notifications/alerts | Requires continuous polling of data sources (rate limits, complexity, cost). Portal data changes infrequently enough that on-demand lookup is sufficient. | On-demand `/portal` command only |
+| Scraping 247Sports or On3 directly | Both use Cloudflare anti-bot protection. Scraping is fragile (HTML changes break everything), legally gray (ToS violations), and maintenance-intensive. The cat-and-mouse game with Cloudflare is not worth it for a single-server bot. | Use structured APIs: CFBD, CBBD, NCAA API, ESPN hidden endpoints |
+| Scraping Sports Reference | Explicit ToS prohibition on bots/scrapers. Rate limited to 20 req/min. Will get IP banned within hours. | Use CFBD/CBBD APIs or ESPN endpoints for stats |
+| Database for recruiting data | PROJECT.md explicitly scopes databases out. JSON persistence is the established v1.0 pattern. Recruiting list will be small (tens of entries, not thousands). | JSON file persistence matching DM subscriber opt-in pattern |
+| NIL valuation data | Only available behind On3 paywalls; would require scraping | Omit entirely; not core to career stats use case |
+| Automated recruiting list updates from external sources | Recruiting lists are curated opinion ("who KU should target"), not objective data. Automation would import noise and remove the human judgment that makes the list valuable. | Manual add/remove by admins is the correct UX |
+| Historical portal tracking or trends | Massively increases data scope and storage needs for minimal value | Current portal window only |
+| Multi-sport beyond MBB/CFB | Scope creep. Women's basketball, baseball, etc. add API complexity without clear demand. | Two sports only per PROJECT.md: men's basketball and football |
+| Player comparison features | Comparing two players side-by-side sounds useful but requires complex stat normalization across positions and sports | Simple per-player stats lookup only |
+
+## Data Source Assessment
+
+This is the critical constraint for the entire milestone. Data source availability determines what features are actually buildable.
+
+### Transfer Portal Data
+
+| Source | Sport | Access | Data Quality | Reliability | Cost | Verdict |
+|--------|-------|--------|-------------|-------------|------|---------|
+| **CFBD API** (`cfbd-python`) | CFB | REST API + Python SDK | HIGH -- name, position, origin, destination, rating, stars, transfer date, eligibility | HIGH -- maintained, versioned, documented | Free: 1,000 calls/month | **PRIMARY for CFB portal** |
+| **CBBD API** (`cbbd-python`) | MBB | REST API + Python SDK | MEDIUM -- roster/player data but NO transfer portal endpoint | MEDIUM -- newer than CFBD, less mature | Free tier (limits unclear) | Use for MBB stats; **portal gap** |
+| **NCAA API** (henrygd) | Both | REST (no SDK) | MEDIUM -- stats/scores; portal coverage unclear | MEDIUM -- community project, 5 req/s | Free | **Supplement** for stats |
+| **ESPN Hidden API** | Both | Undocumented REST | LOW-MEDIUM -- rosters, stats; no explicit portal endpoint | LOW -- undocumented, breaks without notice | Free | **Fallback** only |
+| 247Sports | Both | Web scraping only | HIGH | LOW -- Cloudflare, fragile | Fragile | **DO NOT USE** |
+| On3 | Both | Web scraping only | HIGH | LOW -- Cloudflare, paywall | Fragile | **DO NOT USE** |
+
+### Career Stats Data
+
+| Source | Sport | Access | Data Quality | Reliability | Verdict |
+|--------|-------|--------|-------------|-------------|---------|
+| **CFBD API** | CFB | REST API | HIGH -- season stats, player search by name | HIGH | **PRIMARY for CFB stats** |
+| **CBBD API** | MBB | REST API | HIGH -- season stats, player search, box scores | MEDIUM | **PRIMARY for MBB stats** |
+| **NCAA API** | Both | REST | MEDIUM -- individual stats endpoints exist | MEDIUM | **Supplement** |
+| **ESPN Hidden API** | Both | Undocumented REST | MEDIUM -- athlete endpoints with per-season stats | LOW | **Fallback** |
+
+### Critical Data Gap: MBB Transfer Portal
+
+The biggest risk for this milestone is **men's basketball transfer portal data**. The CBBD API (basketball equivalent of CFBD) does NOT have a transfer portal endpoint. Options to fill this gap, in priority order:
+
+1. **NCAA API** -- investigate whether basketball stats paths expose portal-like data (needs hands-on verification during implementation)
+2. **ESPN Hidden API** -- athlete roster endpoints may indicate transfer status indirectly via team changes
+3. **Admin-curated portal entries** -- treat MBB portal like the recruiting list: admins manually enter portal players they care about. This is the most reliable fallback and may actually be the best UX for a single-server KU-focused bot (users only care about a subset of portal players anyway).
+4. **Web scraping as absolute last resort** -- only if all API options fail, with explicit acceptance of maintenance burden
+
+**Recommendation:** Start with option 3 (admin-curated) as the default for MBB portal. Investigate API options during Phase 1. If a reliable API source exists, migrate to it. This avoids blocking the entire milestone on an unresolved data source question.
 
 ## Feature Dependencies
 
 ```
-Slash command infrastructure
-  |-> On-demand summary (/summary)
-  |     |-> Configurable time range (option on /summary command)
-  |     |-> Multi-channel selection (option on /summary command)
-  |     |-> Question-focused summary (option on /summary command)
-  |     |-> Unread summary (/unreadsummary - separate command)
-  |
-  |-> Scheduled summary (discord.ext.tasks loop)
-        |-> Dedicated output channel (config)
-        |-> DM delivery (config toggle)
+API key configuration (env vars)
+  |-> CFBD client setup → /portal (CFB), /stats (CFB)
+  |-> CBBD client setup → /stats (MBB), /portal (MBB if API available)
 
-Message fetching + pagination
-  |-> All summary features depend on this
-  |-> Smart filtering (pre-processing step applied before LLM call)
+JSON persistence (existing pattern from v1.0)
+  |-> Recruiting list storage
+  |-> MBB portal entries (if admin-curated fallback)
 
-LLM integration (pluggable provider interface)
-  |-> Bullet-point formatting (prompt design)
-  |-> Topic-grouped summaries (prompt design)
-  |-> Action items extraction (prompt design / structured output)
-  |-> Participant attribution (prompt + message metadata)
-  |-> Language configuration (prompt parameter)
-  |-> Question-focused summaries (prompt parameter)
+ADMIN_USER_IDS (existing from v1.0)
+  |-> /recruit add, /recruit remove gating
 
-Discord embed formatting
-  |-> All output features depend on this
-  |-> Thread output mode (post-processing option)
-  |-> Multi-embed splitting for long summaries
+Embed formatting (existing from v1.0)
+  |-> All new command output
+
+Feature chain:
+  /recruit add → /recruit list (list needs entries to display)
+  /recruit list → /stats (stats lookup references players on recruiting list)
+  Caching layer → /portal, /stats (prevents API rate limit exhaustion)
+  Pagination UI → /portal (results can exceed single embed capacity)
 ```
 
 ## MVP Recommendation
 
-Build these first -- they cover the core use case from PROJECT.md and match table-stakes expectations:
+### Phase 1: Foundation + CFB Portal (lowest risk, proves the pattern)
 
-1. **Bot connection + slash command registration** -- foundation everything else depends on
-2. **Message fetching with pagination** -- the data pipeline; handles Discord's 100-message limit
-3. **Smart filtering** -- skip bot messages and system messages before sending to LLM (cheap win, big quality improvement)
-4. **Pluggable LLM provider interface + first implementation** -- the intelligence layer; abstract interface with one concrete provider
-5. **On-demand `/summary` command with time range option** -- wires 1-4 together, immediately testable
-6. **Embed formatting with length handling** -- makes output presentable; handles the 4096-char limit
-7. **Scheduled overnight summary** -- adds the `tasks.loop` trigger to existing summary logic, posts to dedicated channel
-8. **Empty channel handling** -- graceful "no activity" response
+Build the data fetching infrastructure and the command with the best API support first.
 
-**Defer to Phase 2:**
-- Topic grouping and action item extraction (prompt engineering refinement once core loop works)
-- DM delivery (low complexity but not core)
-- `/unreadsummary` (requires tracking user's last message, adds complexity)
-- Question-focused summaries (power-user feature)
-- Thread output mode (config preference)
-- Participant attribution (prompt complexity)
-- Language configuration (single-server likely single-language)
+1. **CFBD API integration** -- API key config in pydantic-settings, async client wrapper, transfer portal fetch, player stats fetch
+2. **`/portal` command (CFB first)** -- sport filter (autocomplete), optional school filter, optional position filter
+3. **Embed formatting for portal results** -- reuse existing embed patterns, add pagination if result set is large
+4. **TTL caching layer** -- simple in-memory cache to avoid burning 1,000 monthly API calls on repeated lookups
 
-## Feature Prioritization Matrix
+### Phase 2: Recruiting List (zero external data dependency)
 
-| Feature | User Value | Effort | Priority |
-|---------|-----------|--------|----------|
-| On-demand `/summary` | Critical | Low | P0 - MVP |
-| Message fetching + pagination | Critical | Medium | P0 - MVP |
-| Pluggable LLM interface | Critical | Medium | P0 - MVP |
-| Configurable time range | High | Low | P0 - MVP |
-| Bullet-point embed output | High | Low | P0 - MVP |
-| Scheduled overnight summary | High | Medium | P0 - MVP |
-| Smart filtering (skip bots) | High | Low | P0 - MVP |
-| Token/length management | High | Medium | P0 - MVP |
-| Empty channel handling | Medium | Low | P0 - MVP |
-| Multi-channel selection | Medium | Low | P1 - Soon after |
-| Topic-grouped summaries | Medium | Medium | P1 - Soon after |
-| Action items extraction | Medium | Medium | P1 - Soon after |
-| DM delivery | Medium | Low | P1 - Soon after |
-| Unread summary | Medium | Medium | P2 - Later |
-| Question-focused summaries | Medium | Medium | P2 - Later |
-| Thread output mode | Low | Low | P2 - Later |
-| Participant attribution | Low | Medium | P2 - Later |
-| Language configuration | Low | Low | P2 - Later |
+Entirely within our control. Ships reliably regardless of API availability.
+
+1. **JSON file persistence for recruiting data** -- Pydantic models for recruit entries, load/save pattern matching DM opt-in code
+2. **`/recruit add`** -- admin-gated, validates required fields (name, position, previous school, star rating, sport)
+3. **`/recruit remove`** -- admin-gated, by player name
+4. **`/recruit list`** -- filterable by sport, available to all users, embed output
+
+### Phase 3: MBB Portal + Career Stats (highest risk, depends on Phase 1 + 2)
+
+1. **CBBD API integration** -- API key config, player/roster/stats fetch
+2. **`/portal` extended to MBB** -- using CBBD or admin-curated fallback
+3. **`/stats` command** -- lookup career stats for players on the recruiting list
+4. **Player name-to-ID matching** -- fuzzy match user-entered names against API player records
+
+### Phase ordering rationale
+
+- **CFB portal first** because CFBD has an explicit, well-documented transfer portal endpoint with rich data (name, position, origin, destination, stars, rating, eligibility). Starting here proves the architecture works before tackling the harder MBB case.
+- **Recruiting list second** because it has zero external dependencies. It ships reliably even if API integrations hit snags. It also establishes the data model that `/stats` depends on.
+- **MBB portal and stats last** because MBB portal has a confirmed data gap (no CBBD portal endpoint), and career stats require player name-to-ID matching -- a fuzzy matching problem that is harder than it sounds. Deferring these lets us solve the hard problems last, with the simpler features already working.
+
+## Complexity Estimates
+
+| Feature | Complexity | Key Challenge |
+|---------|------------|---------------|
+| CFBD/CBBD API integration | Medium | Async HTTP, response parsing, API key management, error handling for rate limits |
+| `/portal` command | Medium | Multiple optional filters, pagination for large result sets, caching |
+| Recruiting list CRUD | Low-Medium | JSON file I/O (existing pattern), Pydantic models, admin gating (existing pattern) |
+| `/stats` command | High | Player name matching (fuzzy), multiple API calls per lookup, sport-specific stat formatting (basketball vs football stats are entirely different) |
+| Pagination UI | Medium | discord.py View/Button pattern, interaction timeouts, state management across pages |
+| Caching layer | Low | Simple dict with TTL or `cachetools.TTLCache` -- straightforward |
+| Player name fuzzy matching | Medium-High | Names may not match exactly between user input and API records. "DJ" vs "D.J.", nicknames, suffixes (Jr., III). Need fuzzy matching without heavy dependencies. |
+| Sport-specific stat formatting | Medium | Basketball (PPG, RPG, APG, FG%, 3P%) vs football (passing yards, TDs, rushing yards, receptions) require entirely different embed layouts |
 
 ## Sources
 
-- [Summary Bot on top.gg](https://top.gg/bot/1058568749076185119) -- commands: /summary, /unreadsummary, /fromtosummary, /setlanguage, /setregion, /setthread
-- [Wallubot documentation](https://docs.wallubot.com/blog/discord-conversation-summarizer) -- auto-detect timespan, question-focused queries, smart filtering
-- [TLDRBot review](https://ai-productreviews.com/tldr-bot-review/) -- /tldr command, adjustable length, automatic intervals, $0.02/request pricing
-- [elizaOS/discord-summarizer](https://github.com/elizaOS/discord-summarizer) -- action items categorization, FAQ extraction, local LLM processing
-- [rauljordan/daily-discord-summarizer](https://github.com/rauljordan/daily-discord-summarizer) -- configurable digest intervals, message aggregation, HTTP API output
-- [Discord native Summaries AI](https://support.discord.com/hc/en-us/articles/12926016807575-In-Channel-Conversation-Summaries) -- topic grouping, participant display, built-in feature
-- [Optimum Web Discord AI Bot 2026](https://www.optimum-web.com/blog/discord-ai-bot-community-management-2026/) -- /summarize extracting key points, decisions, action items, unresolved questions
-- [eesel.ai Discord AI bots ranking](https://www.eesel.ai/blog/discord-ai) -- ecosystem overview of 8 best bots
-- [TLDRBot on top.gg](https://top.gg/bot/1079089748410376202) -- primary command and pricing details
+- [CFBD Python SDK -- PlayerTransfer model](https://github.com/CFBD/cfbd-python/blob/main/docs/PlayerTransfer.md) -- transfer portal data fields (confidence: HIGH)
+- [CBBD Python SDK](https://github.com/CFBD/cbbd-python) -- college basketball data, confirmed no portal endpoint (confidence: HIGH)
+- [NCAA API (henrygd)](https://github.com/henrygd/ncaa-api) -- free API for NCAA data, 5 req/s limit (confidence: MEDIUM)
+- [ESPN Hidden API docs](https://github.com/pseudo-r/Public-ESPN-API) -- undocumented endpoints, may break (confidence: LOW)
+- [Sports-Reference bot/scraping policy](https://www.sports-reference.com/bot-traffic.html) -- explicit prohibition (confidence: HIGH)
+- [CFBD API tiers](https://collegefootballdata.com/api-tiers) -- free tier at 1,000 calls/month (confidence: HIGH)
+- [247Sports transfer portal](https://247sports.com/season/2026-football/transferportal/) -- web only, no API (confidence: HIGH)
+- [On3 transfer portal](https://www.on3.com/transfer-portal/wire/football/) -- web only, no API (confidence: HIGH)
+- [Cloudflare anti-bot difficulty](https://scrapfly.io/blog/posts/how-to-bypass-cloudflare-anti-scraping) -- scraping fragility context (confidence: HIGH)

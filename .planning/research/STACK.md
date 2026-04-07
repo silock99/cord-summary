@@ -1,141 +1,210 @@
-# Technology Stack
+# Stack Research: v1.1 Athletics Intelligence
 
-**Project:** Discord Summary Bot
-**Researched:** 2026-03-27
-**Mode:** Ecosystem
+**Domain:** College athletics data sourcing (transfer portal, career stats, recruiting list)
+**Researched:** 2026-04-07
+**Confidence:** MEDIUM -- ESPN API endpoints are undocumented and could change; 247Sports scraping approach relies on current page structure
 
-## Recommended Stack
+## Existing Stack (Do Not Change)
 
-### Core Framework
+Already validated in v1.0 -- these remain as-is:
 
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| Python | 3.12+ | Runtime | Latest stable with best `zoneinfo` support (needed for timezone-aware scheduling). discord.py supports 3.8-3.12. | HIGH |
-| discord.py | 2.7.1 | Discord API wrapper | The definitive Python Discord library. Production/Stable status, actively maintained (latest release March 3, 2026). Built-in slash command support via `discord.app_commands`, built-in task scheduling via `discord.ext.tasks`. | HIGH |
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Python | 3.12+ | Runtime |
+| discord.py | 2.7.1 | Discord API wrapper, slash commands, task scheduling |
+| openai SDK | 1.x+ | AI provider (pluggable) |
+| pydantic-settings | 2.x | Configuration |
+| aiohttp | 3.13.3 | HTTP client (bundled with discord.py) |
+| pydantic | 2.x | Data models (bundled with pydantic-settings) |
 
-### LLM Integration
+## New Dependencies
 
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| openai (Python SDK) | 1.x+ | LLM provider client | Use as the default provider SDK. Async support built-in (`AsyncOpenAI`). Most LLM providers (including local ones via Ollama) now expose OpenAI-compatible endpoints, making this a practical "universal" client without needing a multi-provider abstraction layer. | HIGH |
-| anthropic (Python SDK) | 0.86.0 | Anthropic provider client | Install only if the user chooses Claude as their provider. Full async support via `AsyncAnthropic`. | MEDIUM |
+### Core: HTML Parsing
 
-**Provider-agnostic design:** Rather than using a multi-provider library, define a simple `SummaryProvider` protocol/ABC in your own code that wraps whichever SDK the user configures. This is 50 lines of code and avoids a heavy dependency. See Architecture notes below.
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| beautifulsoup4 | 4.14.3 | HTML parsing for 247Sports transfer portal pages | Needed to extract `window.__INITIAL_DATA__` JSON from 247Sports HTML pages. BeautifulSoup is the right choice over selectolax/lxml because: (1) the parsing task is simple (find a script tag, extract JSON), not performance-critical; (2) BS4 handles malformed HTML gracefully; (3) massive ecosystem of examples and docs; (4) actively maintained (last release Nov 2025). selectolax would be overkill speed-wise for a few pages per command invocation. |
 
-### Scheduling
+### No New Dependencies Needed
 
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| discord.ext.tasks | (bundled with discord.py) | Daily 9am summary trigger | Built into discord.py. The `@tasks.loop(time=...)` decorator accepts `datetime.time` objects with timezone info, which is exactly what the 9am daily schedule needs. Zero additional dependencies. Handles reconnection logic automatically. | HIGH |
-| zoneinfo (stdlib) | (bundled with Python 3.9+) | Timezone handling | Standard library module for IANA timezone support. Use with `tasks.loop(time=...)` to schedule in the configured local timezone (e.g., `zoneinfo.ZoneInfo("America/New_York")`). No third-party timezone library needed. | HIGH |
+| Capability | How to Achieve | Why No New Library |
+|------------|----------------|-------------------|
+| HTTP requests | `aiohttp` (already installed) | Already a dependency of discord.py. Supports async GET requests natively. Create a dedicated `aiohttp.ClientSession` for external API calls. |
+| JSON persistence | `json` (stdlib) | v1.0 already uses JSON file persistence for DM opt-ins. Same pattern for recruiting list data. Pydantic models serialize to/from JSON natively. |
+| Data validation | `pydantic` (already installed) | Define models for Player, TransferEntry, CareerStats. Already a dependency. |
+| Timezone handling | `zoneinfo` (stdlib) | Already in use for scheduling. |
 
-### Configuration
+## Data Source Architecture
 
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| pydantic-settings | 2.x | Settings management | Type-safe, validated configuration from environment variables and `.env` files. Catches misconfiguration at startup (e.g., missing bot token, invalid timezone) instead of at runtime. Reads `.env` files natively -- no separate `python-dotenv` needed. | HIGH |
+### Transfer Portal Data: 247Sports (PRIMARY)
 
-### Supporting Libraries
+**Source:** `https://247sports.com/season/{year}-{sport}/transferportal/`
+- Basketball: `https://247sports.com/season/2026-basketball/transferportal/`
+- Football: `https://247sports.com/season/2026-football/transferportal/`
 
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| aiohttp | (bundled with discord.py) | HTTP client | Already a dependency of discord.py. Use if you need to call external APIs beyond the LLM SDKs. |
-| pydantic | 2.x | Data models | Already a dependency of pydantic-settings. Use for structured summary data models (message batches, summary results). |
+**How it works (verified 2026-04-07):**
+- Pages embed full player data in `window.__INITIAL_DATA__` as JSON within a `<script>` tag
+- No JavaScript rendering needed -- the JSON is in the initial HTML response
+- Basketball: 626 entries; Football: 8,315+ entries (as of April 2026)
+- Data includes: player name, position, height/weight, star rating, source school, destination school, status (Entered/Committed/Enrolled/Withdrawn), date entered
 
-### Development Tools
+**Fetching approach:**
+1. `aiohttp` GET request to the 247Sports URL
+2. `beautifulsoup4` to find the `<script>` tag containing `__INITIAL_DATA__`
+3. `json.loads()` to parse the embedded JSON
+4. Filter by school parameter from user's slash command
 
-| Tool | Purpose | Why |
-|------|---------|-----|
-| uv | Package management + venv | Fastest Python package installer (replaces pip + venv). Single binary, no bootstrap issues. |
-| ruff | Linting + formatting | Replaces flake8 + black + isort in one tool. Fast, opinionated, zero-config defaults. |
-| pytest + pytest-asyncio | Testing | Standard Python testing. pytest-asyncio needed because discord.py is fully async. |
+**Rate limiting:** Be respectful -- cache results for 15-30 minutes per sport. One request per command is fine.
+
+**Confidence:** MEDIUM -- this approach works today but 247Sports could change their page structure or add Cloudflare bot detection. The site currently serves the data in initial HTML without bot challenges.
+
+### Career Stats: ESPN Hidden API (PRIMARY)
+
+**Athlete overview endpoint (verified working 2026-04-07):**
+```
+https://site.web.api.espn.com/apis/common/v3/sports/{sport}/{league}/athletes/{athleteId}/overview
+```
+
+Where:
+- Basketball: `sport=basketball`, `league=mens-college-basketball`
+- Football: `sport=football`, `league=college-football`
+
+**What it returns (verified):**
+- **Basketball:** GP, MPG, FG%, 3PT%, FT%, RPG, APG, BPG, SPG, FPG, TOPG, PPG -- broken out by season
+- **Football:** Rushing (ATT, YDS, Y/A, TD, LNG), Receiving (REC, YDS, Y/R, TD, LNG), Fumbles -- broken out by season
+
+**Roster endpoint (verified working 2026-04-07):**
+```
+https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/teams/{teamId}/roster
+```
+- Returns full roster with athlete IDs, names, positions, height/weight, experience, headshot URLs
+- Kansas team ID: `2305` (both sports)
+- Athlete fields: id, firstName, lastName, fullName, displayName, position, jersey, height, weight, experience, headshot URL
+
+**Teams endpoint (for school ID lookup):**
+```
+https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/teams
+```
+- Returns all teams with IDs, abbreviations, display names
+- Cache on startup -- rarely changes
+
+**No API key required.** Endpoints are unauthenticated.
+
+**How career stats lookup works:**
+1. User adds player to KU recruiting list (name, position, previous school)
+2. Bot looks up previous school's team ID from cached teams list
+3. Bot fetches roster for previous school to find athlete ID by name match
+4. Bot calls athlete overview endpoint with athlete ID
+5. Returns career stats formatted as Discord embed
+
+**Confidence:** MEDIUM -- undocumented ESPN endpoints. Stable for years and used by multiple open-source projects (SportsDataverse, hoopR), but ESPN could change them. Build with a clean abstraction layer so the data source can be swapped.
 
 ## Installation
 
 ```bash
-# Create project with uv
-uv init discord-summary-bot
-cd discord-summary-bot
-
-# Core dependencies
-uv add "discord.py>=2.7,<3" "pydantic-settings>=2.0,<3" "openai>=1.0,<2"
-
-# Optional: if using Anthropic as provider
-uv add "anthropic>=0.80,<1"
-
-# Dev dependencies
-uv add --dev ruff pytest pytest-asyncio
+# Only new dependency
+uv add beautifulsoup4
 ```
+
+That is it. One new package.
 
 ## Alternatives Considered
 
-| Category | Recommended | Alternative | Why Not |
-|----------|-------------|-------------|---------|
-| Discord library | discord.py | Pycord, Nextcord | discord.py is the original, most maintained, largest community. Pycord/Nextcord are forks created during discord.py's 2021 hiatus -- now that discord.py is back and actively releasing (2.7.1 as of March 2026), the forks have less reason to exist. |
-| Discord library | discord.py | interactions.py | Smaller community, less documentation, fewer examples. discord.py covers the same features. |
-| Multi-LLM abstraction | Own ABC/Protocol | LiteLLM | LiteLLM suffered a supply chain attack on March 24, 2026 (malicious versions 1.82.7-1.82.8 published to PyPI). While resolved, it signals supply chain risk. More importantly, for a single-server bot needing one provider at a time, LiteLLM's 100+ provider support is massive overkill. A 50-line provider protocol is simpler, safer, and easier to debug. |
-| Multi-LLM abstraction | Own ABC/Protocol | LangChain | Enormous dependency tree for a simple summarization task. LangChain is designed for complex agent workflows, not "send text, get summary back." |
-| Scheduling | discord.ext.tasks | APScheduler | APScheduler 3.x is end-of-life (no new features), APScheduler 4.x is still alpha. discord.py's built-in `tasks.loop(time=...)` handles the exact use case (run at specific time daily) with zero additional dependencies and native event loop integration. |
-| Scheduling | discord.ext.tasks | Celery | Nuclear option for a single scheduled task. Requires a message broker (Redis/RabbitMQ). Absurd for this project. |
-| Config | pydantic-settings | python-dotenv alone | No type validation, no structured settings object, manual string-to-type conversion. pydantic-settings does everything python-dotenv does plus validation. |
-| Package manager | uv | pip + venv | uv is 10-100x faster, handles venv creation, lockfiles, and Python version management in one tool. pip + venv still works but uv is the modern standard. |
+| Recommended | Alternative | Why Not |
+|-------------|-------------|---------|
+| 247Sports HTML scraping | On3 transfer portal | On3 pages are more heavily JavaScript-rendered and use React hydration. 247Sports embeds data as `__INITIAL_DATA__` JSON in raw HTML, making extraction trivial without a headless browser. |
+| 247Sports HTML scraping | ESPN transfer portal | ESPN does not have a transfer portal API endpoint. Their coverage is editorial articles, not structured data. |
+| ESPN hidden API for stats | Sports-Reference.com scraping | Sports-Reference rate-limits to 20 requests/minute and requires HTML scraping of complex table structures. ESPN returns clean JSON with no rate limit headers observed. |
+| ESPN hidden API for stats | sportsipy / sportsreference PyPI | Appears unmaintained (last meaningful activity ~2022). Relies on scraping Sports-Reference.com which has changed its page structure multiple times, breaking these packages. ESPN API is more reliable. |
+| ESPN hidden API for stats | SportsDataverse (sdv-py) | Focused on play-by-play and box score data, not individual player career stat summaries. Adds a heavy dependency for a narrow use case ESPN handles directly. |
+| ESPN hidden API for stats | SportsDataIO | Requires paid API key ($25+/month). ESPN hidden API is free and returns the same data. |
+| beautifulsoup4 | selectolax | Selectolax is 30x faster but we parse 1-2 pages per command invocation, not thousands. BS4's better error handling and documentation win for this use case. |
+| beautifulsoup4 | lxml | lxml requires C compilation and can have install issues on Windows. BS4 with the default html.parser (stdlib) has zero additional C dependencies. For extracting one script tag, XPath support is unnecessary. |
+| aiohttp (existing) | httpx | Would add a new dependency when aiohttp is already installed and in the event loop. No benefit for simple GET requests. |
+| JSON file persistence | SQLite | Project constraint from v1.0: avoid database dependencies. JSON files work fine for a single-server bot managing a recruiting list of ~50-100 players. |
 
 ## What NOT to Use
 
-### LiteLLM
-**Why not:** Supply chain attack in March 2026. Even post-resolution, the library has 800+ open issues and is heavy (~100+ provider integrations). For a bot that talks to one LLM provider, write your own thin wrapper.
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| Selenium / Playwright | Headless browser is massive overkill. 247Sports embeds data as JSON in HTML; ESPN returns JSON directly. No JS rendering needed. | aiohttp + beautifulsoup4 |
+| sportsipy / sportsreference | Unmaintained since ~2022. Depends on Sports-Reference.com page structure which breaks frequently. | ESPN hidden API via aiohttp |
+| Scrapy | Full scraping framework with its own event loop (Twisted). Conflicts with discord.py's asyncio event loop. Designed for crawling thousands of pages, not fetching 2-3 endpoints. | aiohttp (already in your event loop) |
+| requests (sync) | Blocks the asyncio event loop. discord.py is fully async; all HTTP calls must be async. | aiohttp |
+| pandas | Sometimes suggested for sports data. Massive dependency for formatting a few stat tables. Pydantic models + string formatting handle this fine. | pydantic models |
 
-### LangChain / LlamaIndex
-**Why not:** These are orchestration frameworks for complex RAG/agent pipelines. Summarizing channel messages is a single LLM call with a prompt. Adding LangChain would bring in 50+ transitive dependencies for zero benefit.
+## Integration Points with Existing Bot
 
-### Pycord / Nextcord
-**Why not:** Forks of discord.py created when discord.py was briefly abandoned in 2021. discord.py resumed active development and is now at v2.7.1 (March 2026). The original has the largest community, most documentation, and best maintained codebase.
+### HTTP Session Management
+Create a shared `aiohttp.ClientSession` in the bot's `setup_hook()` method, close it in `close()`. Do NOT create sessions per-request (connection pooling matters).
 
-### APScheduler
-**Why not:** discord.py already includes `discord.ext.tasks` which handles time-based scheduling natively. Adding APScheduler creates a second event loop concern and an unnecessary dependency. APScheduler 3.x is feature-frozen; 4.x is alpha.
-
-### SQLite / PostgreSQL / Any Database
-**Why not (for v1):** The bot reads message history directly from Discord's API and generates ephemeral summaries. There is no data that needs persistence in v1. If caching summaries becomes a need later, SQLite can be added then.
-
-## Architecture Note: Provider-Agnostic Interface
-
-The PROJECT.md specifies a pluggable AI backend. Instead of a heavy multi-provider library, implement this pattern:
-
+### Data Models (Pydantic)
 ```python
-from abc import ABC, abstractmethod
+class TransferEntry(BaseModel):
+    name: str
+    position: str
+    height: str | None
+    weight: str | None
+    stars: float | None
+    source_school: str
+    destination_school: str | None
+    status: str  # "Entered", "Committed", "Enrolled", "Withdrawn"
+    sport: Literal["basketball", "football"]
 
-class SummaryProvider(ABC):
-    @abstractmethod
-    async def summarize(self, messages: list[str]) -> str:
-        """Given a list of message strings, return a bullet-point summary."""
-        ...
+class Recruit(BaseModel):
+    name: str
+    position: str
+    previous_school: str
+    stars: int | None  # 1-5
+    sport: Literal["basketball", "football"]
+    espn_athlete_id: int | None  # resolved on first stats lookup
+    added_by: int  # Discord user ID
+    added_at: datetime
 
-class OpenAIProvider(SummaryProvider):
-    def __init__(self, client, model: str = "gpt-4o"):
-        self.client = client
-        self.model = model
+class SeasonStats(BaseModel):
+    season: str
+    stats: dict[str, str | float]
 
-    async def summarize(self, messages: list[str]) -> str:
-        response = await self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": "Summarize the following Discord discussion as concise bullet points."},
-                {"role": "user", "content": "\n".join(messages)}
-            ]
-        )
-        return response.choices[0].message.content
+class CareerStats(BaseModel):
+    athlete_name: str
+    athlete_id: int
+    sport: Literal["basketball", "football"]
+    seasons: list[SeasonStats]
 ```
 
-This is trivial to implement for any provider and avoids framework lock-in.
+### JSON File Persistence
+Same pattern as `dm_subscribers.json`:
+- `data/recruits.json` -- KU recruiting list
+- Load on startup, write on mutation
+- Use `asyncio.Lock` for concurrent write protection (same pattern as DM subscriber persistence)
+
+### Caching Strategy
+- Transfer portal data: cache 30 minutes (portal updates are not real-time critical)
+- ESPN team list: cache on startup, refresh daily
+- Career stats: cache 24 hours (stats don't change mid-season frequently)
+- Use a simple dict-based TTL cache; no need for redis/memcached for a single-server bot
+
+## Version Compatibility
+
+| Package | Compatible With | Notes |
+|---------|-----------------|-------|
+| beautifulsoup4 4.14.3 | Python 3.12+ | Uses stdlib `html.parser` by default; no lxml needed |
+| aiohttp 3.13.3 | discord.py 2.7.1 | Already installed and working |
+| pydantic 2.x | pydantic-settings 2.x | Already installed and working |
 
 ## Sources
 
-- [discord.py PyPI](https://pypi.org/project/discord.py/) -- v2.7.1, March 2026
-- [discord.py Releases](https://github.com/Rapptz/discord.py/releases) -- release history
-- [discord.ext.tasks docs](https://discordpy.readthedocs.io/en/stable/ext/tasks/index.html) -- built-in scheduling
-- [OpenAI Python SDK](https://pypi.org/project/openai/) -- v2.30.0
-- [Anthropic Python SDK](https://github.com/anthropics/anthropic-sdk-python/releases) -- v0.86.0
-- [APScheduler PyPI](https://pypi.org/project/APScheduler/) -- 3.11.2 stable, 4.0.0a1 alpha
-- [Pydantic Settings docs](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
-- [LiteLLM supply chain attack](https://docs.litellm.ai/blog/security-update-march-2026) -- March 24, 2026 incident
-- [LiteLLM attack analysis (Datadog)](https://securitylabs.datadoghq.com/articles/litellm-compromised-pypi-teampcp-supply-chain-campaign/)
+- [247Sports Basketball Transfer Portal](https://247sports.com/season/2026-basketball/transferportal/) -- verified `__INITIAL_DATA__` JSON embedding (MEDIUM confidence)
+- [247Sports Football Transfer Portal](https://247sports.com/season/2026-football/transferportal/) -- verified same pattern, 8,315+ entries
+- [ESPN Hidden API Documentation (GitHub)](https://github.com/pseudo-r/Public-ESPN-API) -- endpoint patterns for athlete data
+- [ESPN Hidden API Gist](https://gist.github.com/akeaswaran/b48b02f1c94f873c6655e7129910fc3b) -- community-maintained endpoint list
+- ESPN athlete overview endpoint -- verified working for basketball and football career stats
+- ESPN roster endpoint -- verified working for Kansas (team ID 2305)
+- [beautifulsoup4 on PyPI](https://pypi.org/project/beautifulsoup4/) -- v4.14.3, released Nov 2025
+- [sportsipy on GitHub](https://github.com/roclark/sportsipy) -- evaluated, unmaintained since ~2022
+- [SportsDataverse Python](https://sportsdataverse-py.sportsdataverse.org/) -- evaluated, too focused on play-by-play
+- [SportsDataIO](https://sportsdata.io/developers/api-documentation/ncaa-basketball) -- evaluated, requires paid API key
+
+---
+*Stack research for: v1.1 Athletics Intelligence (transfer portal, career stats, recruiting list)*
+*Researched: 2026-04-07*
