@@ -37,11 +37,11 @@
   3. Any user can view the recruiting list filtered by sport, displayed as a formatted embed with last-updated timestamps
   4. Sport selection uses an autocomplete dropdown (basketball/football) and the bot auto-detects sport from channel when applicable
   5. Recruiting data survives bot restarts (persisted to JSON file)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 07-01: TBD
-- [ ] 07-02: TBD
+- [ ] 07-01-PLAN.md — Config infrastructure, data model, and JSON persistence layer
+- [ ] 07-02-PLAN.md — Slash commands for recruiting and transfer lists, wired into bot client
 
 ### Phase 8: Transfer Portal
 **Goal**: Users can look up transfer portal players by sport and school, with football data from the CFBD API and basketball data from admin-curated entries
@@ -87,6 +87,6 @@ Phases execute in numeric order: 7 -> 8 -> 9
 | 4. Summary Quality Improvements | v1.0 | 2/2 | Complete | 2026-04-03 |
 | 5. Summary Language Controls | v1.0 | 1/1 | Complete | 2026-04-04 |
 | 6. Error Alerting | v1.0 | 2/2 | Complete | 2026-04-04 |
-| 7. Recruiting List and Foundation | v1.1 | 0/0 | Not started | - |
+| 7. Recruiting List and Foundation | v1.1 | 0/2 | Planning | - |
 | 8. Transfer Portal | v1.1 | 0/0 | Not started | - |
 | 9. Career Stats | v1.1 | 0/0 | Not started | - |
