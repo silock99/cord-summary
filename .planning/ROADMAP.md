@@ -21,7 +21,7 @@
 
 ### v1.1 Athletics Intelligence
 
-- [ ] **Phase 7: Recruiting List and Foundation** - Admin-curated KU recruiting list with JSON persistence, sport autocomplete, and channel-to-sport config
+- [x] **Phase 7: Recruiting List and Foundation** - Admin-curated KU recruiting list with JSON persistence, sport autocomplete, and channel-to-sport config (completed 2026-04-07)
 - [ ] **Phase 8: Transfer Portal** - Portal lookup for football (CFBD API) and basketball (admin-curated), with caching, pagination, and position filtering
 - [ ] **Phase 9: Career Stats** - College career stats for recruiting list players with fuzzy name matching and sport-specific formatting
 
@@ -41,7 +41,7 @@
 
 Plans:
 - [x] 07-01-PLAN.md — Config infrastructure, data model, and JSON persistence layer
-- [ ] 07-02-PLAN.md — Slash commands for recruiting and transfer lists, wired into bot client
+- [x] 07-02-PLAN.md — Slash commands for recruiting and transfer lists, wired into bot client
 
 ### Phase 8: Transfer Portal
 **Goal**: Users can look up transfer portal players by sport and school, with football data from the CFBD API and basketball data from admin-curated entries
@@ -87,6 +87,6 @@ Phases execute in numeric order: 7 -> 8 -> 9
 | 4. Summary Quality Improvements | v1.0 | 2/2 | Complete | 2026-04-03 |
 | 5. Summary Language Controls | v1.0 | 1/1 | Complete | 2026-04-04 |
 | 6. Error Alerting | v1.0 | 2/2 | Complete | 2026-04-04 |
-| 7. Recruiting List and Foundation | v1.1 | 1/2 | In Progress|  |
+| 7. Recruiting List and Foundation | v1.1 | 2/2 | Complete   | 2026-04-07 |
 | 8. Transfer Portal | v1.1 | 0/0 | Not started | - |
 | 9. Career Stats | v1.1 | 0/0 | Not started | - |

@@ -18,11 +18,11 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 
 ### Recruiting
 
-- [ ] **RECRUIT-01**: Authorized users can add a player to the KU recruiting list (name, position, previous school, star rating, sport)
-- [ ] **RECRUIT-02**: Authorized users can remove a player from the KU recruiting list
-- [ ] **RECRUIT-03**: User can view the KU recruiting list filtered by sport
-- [ ] **RECRUIT-04**: Recruiting list entries show last-updated timestamps
-- [ ] **RECRUIT-05**: Sport selection uses autocomplete dropdown
+- [x] **RECRUIT-01**: Authorized users can add a player to the KU recruiting list (name, position, previous school, star rating, sport)
+- [x] **RECRUIT-02**: Authorized users can remove a player from the KU recruiting list
+- [x] **RECRUIT-03**: User can view the KU recruiting list filtered by sport
+- [x] **RECRUIT-04**: Recruiting list entries show last-updated timestamps
+- [x] **RECRUIT-05**: Sport selection uses autocomplete dropdown
 - [x] **RECRUIT-06**: Recruiting data persisted in JSON files
 
 ### Career Stats
@@ -72,11 +72,11 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 | PORTAL-04 | Phase 8 | Pending |
 | PORTAL-05 | Phase 8 | Pending |
 | PORTAL-06 | Phase 8 | Pending |
-| RECRUIT-01 | Phase 7 | Pending |
-| RECRUIT-02 | Phase 7 | Pending |
-| RECRUIT-03 | Phase 7 | Pending |
-| RECRUIT-04 | Phase 7 | Pending |
-| RECRUIT-05 | Phase 7 | Pending |
+| RECRUIT-01 | Phase 7 | Complete |
+| RECRUIT-02 | Phase 7 | Complete |
+| RECRUIT-03 | Phase 7 | Complete |
+| RECRUIT-04 | Phase 7 | Complete |
+| RECRUIT-05 | Phase 7 | Complete |
 | RECRUIT-06 | Phase 7 | Complete |
 | STATS-01 | Phase 9 | Pending |
 | STATS-02 | Phase 9 | Pending |
