@@ -66,33 +66,33 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PORTAL-01 | — | Pending |
-| PORTAL-02 | — | Pending |
-| PORTAL-03 | — | Pending |
-| PORTAL-04 | — | Pending |
-| PORTAL-05 | — | Pending |
-| PORTAL-06 | — | Pending |
-| RECRUIT-01 | — | Pending |
-| RECRUIT-02 | — | Pending |
-| RECRUIT-03 | — | Pending |
-| RECRUIT-04 | — | Pending |
-| RECRUIT-05 | — | Pending |
-| RECRUIT-06 | — | Pending |
-| STATS-01 | — | Pending |
-| STATS-02 | — | Pending |
-| STATS-03 | — | Pending |
-| STATS-04 | — | Pending |
-| INFRA-01 | — | Pending |
-| INFRA-02 | — | Pending |
-| INFRA-03 | — | Pending |
-| INFRA-04 | — | Pending |
-| INFRA-05 | — | Pending |
+| PORTAL-01 | Phase 8 | Pending |
+| PORTAL-02 | Phase 8 | Pending |
+| PORTAL-03 | Phase 8 | Pending |
+| PORTAL-04 | Phase 8 | Pending |
+| PORTAL-05 | Phase 8 | Pending |
+| PORTAL-06 | Phase 8 | Pending |
+| RECRUIT-01 | Phase 7 | Pending |
+| RECRUIT-02 | Phase 7 | Pending |
+| RECRUIT-03 | Phase 7 | Pending |
+| RECRUIT-04 | Phase 7 | Pending |
+| RECRUIT-05 | Phase 7 | Pending |
+| RECRUIT-06 | Phase 7 | Pending |
+| STATS-01 | Phase 9 | Pending |
+| STATS-02 | Phase 9 | Pending |
+| STATS-03 | Phase 9 | Pending |
+| STATS-04 | Phase 9 | Pending |
+| INFRA-01 | Phase 8 | Pending |
+| INFRA-02 | Phase 9 | Pending |
+| INFRA-03 | Phase 8 | Pending |
+| INFRA-04 | Phase 7 | Pending |
+| INFRA-05 | Phase 7 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 21 total
-- Mapped to phases: 0
-- Unmapped: 21
+- Mapped to phases: 21
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-07*
-*Last updated: 2026-04-07 after initial definition*
+*Last updated: 2026-04-07 after roadmap creation*
