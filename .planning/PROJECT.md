@@ -35,11 +35,11 @@ Users can quickly catch up on what they missed without reading through hundreds 
 ### Active
 
 - [ ] Transfer portal lookup command filtered by sport and school
-- [ ] KU recruiting list with role-gated add/remove (name, position, previous school, star rating)
-- [ ] KU recruiting list view command filterable by sport
 - [ ] Career stats lookup for players on KU recruiting list
-- [ ] JSON file persistence for recruiting data
-- [ ] Two sports supported: men's college basketball and men's college football
+- ✓ KU recruiting list with role-gated add/remove (name, position, previous school, star rating) — Validated in Phase 7: Recruiting List and Foundation
+- ✓ KU recruiting list view command filterable by sport — Validated in Phase 7: Recruiting List and Foundation
+- ✓ JSON file persistence for recruiting data — Validated in Phase 7: Recruiting List and Foundation
+- ✓ Two sports supported: men's college basketball and men's college football — Validated in Phase 7: Recruiting List and Foundation
 
 ### Out of Scope
 
@@ -92,6 +92,8 @@ Persistence: JSON file for DM subscriber opt-ins, text files for language blockl
 | Error alerts via DM, not channel | Keeps summary channel clean; errors only visible to admins | ✓ Decided Phase 6 |
 | Reply indentation depth-2 cap | Keeps LLM input readable without deep nesting | ✓ Decided Phase 4 |
 | Popularity threshold: 5+ reactions OR 5+ replies | Clear, simple threshold for flagging popular messages | ✓ Decided Phase 4 |
+| Channel-to-sport mapping (no sport parameter) | Sport derived from channel ID — simpler UX, no dropdown needed | ✓ Decided Phase 7 |
+| Shared RecruitingStore for both recruit/transfer | Same class, separate JSON files — DRY without over-abstracting | ✓ Decided Phase 7 |
 
 ## Evolution
 
@@ -111,4 +113,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-07 after v1.1 milestone start*
+*Last updated: 2026-04-07 after Phase 7 completion*
