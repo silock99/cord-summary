@@ -3,12 +3,17 @@ import logging
 import discord
 from discord.ext import commands
 
+from pathlib import Path
+
 from bot.commands.post_summary import register_post_summary_command
+from bot.commands.recruiting import register_recruit_commands
 from bot.commands.summary import register_summary_command
+from bot.commands.transfers import register_transfer_commands
 from bot.config import Settings
 from bot.language_filter import load_language_config
 from bot.providers.base import SummaryProvider
 from bot.scheduling.overnight import OvernightScheduler
+from bot.storage.recruiting_store import RecruitingStore
 
 logger = logging.getLogger(__name__)
 
@@ -22,11 +27,22 @@ class SummaryBot(commands.Bot):
         self.settings = settings
         self.provider: SummaryProvider | None = None
         self.scheduler: OvernightScheduler | None = None
+        self.recruit_store = RecruitingStore(Path("data/recruits.json"))
+        self.transfer_store = RecruitingStore(Path("data/transfers.json"))
 
     async def setup_hook(self) -> None:
         """Register commands and sync to the configured guild (INFRA-03). Fires once before connecting."""
         register_summary_command(self)
         register_post_summary_command(self)
+
+        # Load recruiting/transfer data from JSON files
+        self.recruit_store.load()
+        self.transfer_store.load()
+
+        # Register recruiting and transfer commands (Phase 7)
+        register_recruit_commands(self)
+        register_transfer_commands(self)
+
         guild = discord.Object(id=self.settings.guild_id)
         self.tree.copy_global_to(guild=guild)
         synced = await self.tree.sync(guild=guild)
