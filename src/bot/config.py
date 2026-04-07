@@ -49,12 +49,49 @@ class Settings(BaseSettings):
         parts = [p.strip() for p in raw.split(",")]
         return [int(p) for p in parts if p]
 
+    # Recruiting editor IDs (comma-separated) -- per D-11, INFRA-05
+    recruiting_editor_ids_raw: str = Field(default="", alias="RECRUITING_EDITOR_IDS")
+
+    # Channel-to-sport mapping (comma-separated) -- per D-14, INFRA-04
+    football_channel_ids_raw: str = Field(default="", alias="FOOTBALL_CHANNEL_IDS")
+    basketball_channel_ids_raw: str = Field(default="", alias="BASKETBALL_CHANNEL_IDS")
+
     # Overnight schedule
     overnight_start_hour: int = 22  # 10pm
     overnight_end_hour: int = 9    # 9am
 
     # Thread delivery (OUT-04, D-08, D-09)
     use_threads: bool = False
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def recruiting_editor_ids(self) -> list[int]:
+        """Parse comma-separated recruiting editor user IDs."""
+        raw = self.recruiting_editor_ids_raw
+        if not raw:
+            return []
+        parts = [p.strip() for p in raw.split(",")]
+        return [int(p) for p in parts if p]
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def football_channel_ids(self) -> list[int]:
+        """Parse comma-separated football channel IDs."""
+        raw = self.football_channel_ids_raw
+        if not raw:
+            return []
+        parts = [p.strip() for p in raw.split(",")]
+        return [int(p) for p in parts if p]
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def basketball_channel_ids(self) -> list[int]:
+        """Parse comma-separated basketball channel IDs."""
+        raw = self.basketball_channel_ids_raw
+        if not raw:
+            return []
+        parts = [p.strip() for p in raw.split(",")]
+        return [int(p) for p in parts if p]
 
     @computed_field  # type: ignore[prop-decorator]
     @property
