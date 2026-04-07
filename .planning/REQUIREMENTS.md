@@ -23,7 +23,7 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 - [ ] **RECRUIT-03**: User can view the KU recruiting list filtered by sport
 - [ ] **RECRUIT-04**: Recruiting list entries show last-updated timestamps
 - [ ] **RECRUIT-05**: Sport selection uses autocomplete dropdown
-- [ ] **RECRUIT-06**: Recruiting data persisted in JSON files
+- [x] **RECRUIT-06**: Recruiting data persisted in JSON files
 
 ### Career Stats
 
@@ -37,8 +37,8 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 - [ ] **INFRA-01**: CFBD API integration for football portal data and stats
 - [ ] **INFRA-02**: CBBD API integration for basketball stats
 - [ ] **INFRA-03**: MBB transfer portal uses admin-curated entries (no API available)
-- [ ] **INFRA-04**: Channel-to-sport mapping configurable via environment variables
-- [ ] **INFRA-05**: Authorized user IDs configurable for recruiting list management
+- [x] **INFRA-04**: Channel-to-sport mapping configurable via environment variables
+- [x] **INFRA-05**: Authorized user IDs configurable for recruiting list management
 
 ## Future Requirements
 
@@ -77,7 +77,7 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 | RECRUIT-03 | Phase 7 | Pending |
 | RECRUIT-04 | Phase 7 | Pending |
 | RECRUIT-05 | Phase 7 | Pending |
-| RECRUIT-06 | Phase 7 | Pending |
+| RECRUIT-06 | Phase 7 | Complete |
 | STATS-01 | Phase 9 | Pending |
 | STATS-02 | Phase 9 | Pending |
 | STATS-03 | Phase 9 | Pending |
@@ -85,8 +85,8 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 | INFRA-01 | Phase 8 | Pending |
 | INFRA-02 | Phase 9 | Pending |
 | INFRA-03 | Phase 8 | Pending |
-| INFRA-04 | Phase 7 | Pending |
-| INFRA-05 | Phase 7 | Pending |
+| INFRA-04 | Phase 7 | Complete |
+| INFRA-05 | Phase 7 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 21 total

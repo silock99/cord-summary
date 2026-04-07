@@ -40,7 +40,7 @@
 **Plans**: 2 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — Config infrastructure, data model, and JSON persistence layer
+- [x] 07-01-PLAN.md — Config infrastructure, data model, and JSON persistence layer
 - [ ] 07-02-PLAN.md — Slash commands for recruiting and transfer lists, wired into bot client
 
 ### Phase 8: Transfer Portal
@@ -87,6 +87,6 @@ Phases execute in numeric order: 7 -> 8 -> 9
 | 4. Summary Quality Improvements | v1.0 | 2/2 | Complete | 2026-04-03 |
 | 5. Summary Language Controls | v1.0 | 1/1 | Complete | 2026-04-04 |
 | 6. Error Alerting | v1.0 | 2/2 | Complete | 2026-04-04 |
-| 7. Recruiting List and Foundation | v1.1 | 0/2 | Planning | - |
+| 7. Recruiting List and Foundation | v1.1 | 1/2 | In Progress|  |
 | 8. Transfer Portal | v1.1 | 0/0 | Not started | - |
 | 9. Career Stats | v1.1 | 0/0 | Not started | - |
