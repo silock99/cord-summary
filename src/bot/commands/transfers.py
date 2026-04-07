@@ -108,7 +108,7 @@ def register_transfer_commands(bot) -> None:
     )
     @require_sport_channel()
     async def transfer_list(interaction: discord.Interaction) -> None:
-        await interaction.response.defer(ephemeral=False)
+        await interaction.response.defer(ephemeral=True)
         sport = get_sport_from_channel(interaction.channel_id, interaction.client.settings)
         players = bot.transfer_store.list_players(sport)
         emoji = SPORT_EMOJI.get(sport, "")

@@ -108,7 +108,7 @@ def register_recruit_commands(bot) -> None:
     )
     @require_sport_channel()
     async def recruit_list(interaction: discord.Interaction) -> None:
-        await interaction.response.defer(ephemeral=False)
+        await interaction.response.defer(ephemeral=True)
         sport = get_sport_from_channel(interaction.channel_id, interaction.client.settings)
         players = bot.recruit_store.list_players(sport)
         emoji = SPORT_EMOJI.get(sport, "")
