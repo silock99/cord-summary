@@ -62,6 +62,19 @@ class SummaryBot(commands.Bot):
         self.scheduler.start()
         logger.info("Summary schedulers started")
 
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        """Global guard: reject interactions from channels not in the master allowlist."""
+        s = self.settings
+        master = set(s.allowed_channel_ids + s.football_channel_ids + s.basketball_channel_ids)
+        if not master:
+            return True  # No channels configured — allow all (dev/testing)
+        if interaction.channel_id in master:
+            return True
+        await interaction.response.send_message(
+            "This command can't be used in this channel.", ephemeral=True
+        )
+        return False
+
     async def on_ready(self) -> None:
         logger.info(f"Bot connected as {self.user} (ID: {self.user.id})")
         # Verify Message Content intent is working (INFRA-01 success criteria)
