@@ -50,7 +50,12 @@ def register_transfer_commands(bot) -> None:
         position="Position (e.g., QB, WR, ATH, PG, C)",
         school="Previous/current school",
         stars="Star rating (0 for unrated, 1-5)",
+        type="Transfer type: outgoing (leaving KU) or target (coming to KU)",
     )
+    @app_commands.choices(type=[
+        app_commands.Choice(name="Outgoing (leaving KU)", value="outgoing"),
+        app_commands.Choice(name="Target (coming to KU)", value="target"),
+    ])
     @require_sport_channel()
     @is_recruiting_editor()
     async def transfer_add(
@@ -59,10 +64,12 @@ def register_transfer_commands(bot) -> None:
         position: str,
         school: str,
         stars: app_commands.Range[int, 0, 5] = 0,
+        type: app_commands.Choice[str] | None = None,
     ) -> None:
         await interaction.response.defer(ephemeral=True)
         sport = get_sport_from_channel(interaction.channel_id, interaction.client.settings)
-        player = bot.transfer_store.add_player(sport, name, position, school, stars)
+        transfer_type = type.value if type else "target"
+        player = bot.transfer_store.add_player(sport, name, position, school, stars, player_type=transfer_type)
         if player is None:
             await interaction.edit_original_response(
                 content=f"**{name}** is already on the {sport} transfer list."
