@@ -6,6 +6,7 @@ from discord.ext import commands
 from pathlib import Path
 
 from bot.commands.career import register_career_commands
+from bot.commands.help import register_help_commands
 from bot.commands.post_summary import register_post_summary_command
 from bot.commands.roster import register_roster_commands
 from bot.commands.recruiting import register_recruit_commands
@@ -54,6 +55,9 @@ class SummaryBot(commands.Bot):
 
         # Register roster commands (Phase 10)
         register_roster_commands(self)
+
+        # Register help command (Phase 11)
+        register_help_commands(self)
 
         guild = discord.Object(id=self.settings.guild_id)
         self.tree.copy_global_to(guild=guild)
