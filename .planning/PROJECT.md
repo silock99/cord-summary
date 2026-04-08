@@ -35,6 +35,8 @@ Users can quickly catch up on what they missed without reading through hundreds 
 ### Active
 
 - [ ] Transfer portal lookup command filtered by sport and school (transfer management commands with cache infrastructure complete — Validated in Phase 8: Transfer Portal)
+- ✓ Current roster import and display with jersey numbers, positions, and class years — Validated in Phase 10: Current Roster
+- ✓ Roster players integrated into /stats lookups — Validated in Phase 10: Current Roster
 - ✓ Career stats lookup for players on KU recruiting list — Validated in Phase 9: Career Stats
 - ✓ KU recruiting list with role-gated add/remove (name, position, previous school, star rating) — Validated in Phase 7: Recruiting List and Foundation
 - ✓ KU recruiting list view command filterable by sport — Validated in Phase 7: Recruiting List and Foundation
@@ -97,6 +99,8 @@ Persistence: JSON file for DM subscriber opt-ins, text files for language blockl
 | TTLCache with clear-on-mutate strategy | 15-min TTL for list queries, full cache.clear() on add/remove — simple, safe for single-server | ✓ Decided Phase 8 |
 | CBBD via aiohttp REST instead of SDK | cbbd Python SDK incompatible with pydantic v2; direct REST calls are simple and avoid the conflict | ✓ Decided Phase 9 |
 | Stats fetched at add-time, stored in player entry | Avoids API call on every /career lookup; stats cached in JSON alongside player data | ✓ Decided Phase 9 |
+| Roster replace-mode with empty-response guard | Import replaces sport roster (not append), but empty API response preserves existing data | ✓ Decided Phase 10 |
+| Roster type="roster" distinct from target/outgoing | Roster players distinguished in PlayerEntry.type — separate from recruit and transfer stores | ✓ Decided Phase 10 |
 
 ## Evolution
 
@@ -116,4 +120,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-08 after Phase 9 completion*
+*Last updated: 2026-04-08 after Phase 10 completion*
