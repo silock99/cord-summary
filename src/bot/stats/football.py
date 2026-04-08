@@ -118,3 +118,39 @@ async def fetch_football_stats(
             "Failed to fetch football stats for '%s'", player_name, exc_info=True
         )
         return None
+
+
+async def fetch_football_roster(settings: Settings) -> list[dict]:
+    """Fetch the current KU football roster from CFBD API.
+
+    Returns list of dicts with keys: name, position, jersey_number, class_year.
+    Returns empty list if API key missing or API error.
+    """
+    if not settings.cfbd_api_key:
+        logger.debug("CFBD API key not configured, skipping roster fetch")
+        return []
+
+    YEAR_MAP = {1: "Fr.", 2: "So.", 3: "Jr.", 4: "Sr.", 5: "R-Sr."}
+
+    try:
+        configuration = cfbd.Configuration()
+        configuration.api_key["Authorization"] = f"Bearer {settings.cfbd_api_key}"
+
+        with cfbd.ApiClient(configuration) as api_client:
+            teams_api = cfbd.TeamsApi(api_client)
+            year = datetime.now().year
+            roster = teams_api.get_roster(team="Kansas", year=year)
+
+            return [
+                {
+                    "name": f"{p.first_name} {p.last_name}",
+                    "position": p.position or "ATH",
+                    "jersey_number": p.jersey or 0,
+                    "class_year": YEAR_MAP.get(p.year, ""),
+                }
+                for p in roster
+            ]
+
+    except Exception:
+        logger.warning("Failed to fetch football roster from CFBD", exc_info=True)
+        return []

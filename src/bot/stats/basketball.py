@@ -149,3 +149,69 @@ async def fetch_basketball_stats(
             exc_info=True,
         )
         return None
+
+
+async def fetch_basketball_roster(settings: Settings) -> list[dict]:
+    """Fetch the current KU basketball roster from CBBD API.
+
+    Returns list of dicts with keys: name, position, jersey_number, class_year.
+    Returns empty list if API key missing or API error.
+    """
+    if not settings.cbbd_api_key:
+        logger.debug("CBBD API key not configured, skipping roster fetch")
+        return []
+
+    YEAR_MAP = {1: "Fr.", 2: "So.", 3: "Jr.", 4: "Sr."}
+
+    try:
+        headers = {"Authorization": f"Bearer {settings.cbbd_api_key}"}
+        current_year = datetime.now().year
+
+        async with aiohttp.ClientSession(headers=headers) as session:
+            data = await _cbbd_get(
+                session,
+                "/roster",
+                params={"team": "Kansas", "season": current_year},
+            )
+            if not data:
+                return []
+
+            result = []
+            for p in data:
+                jersey_raw = p.get("jersey", 0)
+                try:
+                    jersey_num = int(jersey_raw) if jersey_raw else 0
+                except (ValueError, TypeError):
+                    jersey_num = 0
+
+                start_season = p.get("start_season")
+                if start_season:
+                    try:
+                        years_in = current_year - int(start_season) + 1
+                        class_year = YEAR_MAP.get(
+                            years_in, "Sr." if years_in > 4 else "Fr."
+                        )
+                    except (ValueError, TypeError):
+                        class_year = ""
+                else:
+                    class_year = ""
+
+                name = (
+                    p.get("name")
+                    or f"{p.get('first_name', '')} {p.get('last_name', '')}".strip()
+                )
+                result.append(
+                    {
+                        "name": name,
+                        "position": p.get("position", ""),
+                        "jersey_number": jersey_num,
+                        "class_year": class_year,
+                    }
+                )
+            return result
+
+    except Exception:
+        logger.warning(
+            "Failed to fetch basketball roster from CBBD", exc_info=True
+        )
+        return []
