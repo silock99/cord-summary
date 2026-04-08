@@ -58,7 +58,7 @@ Plans:
 Plans:
 - [x] 08-01-PLAN.md — Data model extension (type field), store updates (position filter), and TTL cache module
 - [x] 08-02-PLAN.md — Transfer command updates with type choice, grouped display, and pagination at 10/page
-- [ ] 08-03-PLAN.md — Gap closure: wire TTLCache into transfer commands for cached repeated queries
+- [x] 08-03-PLAN.md — Gap closure: wire TTLCache into transfer commands for cached repeated queries
 
 ### Phase 9: Career Stats
 **Goal**: Users can look up college career stats for any player on the KU recruiting list, with sport-appropriate formatting and fuzzy name matching
