@@ -53,11 +53,12 @@ Plans:
   3. Portal results paginate with button navigation when exceeding one embed page
   4. Repeated portal queries within 15-30 minutes are served from cache (no redundant API calls); football data comes from CFBD API, basketball data from admin-curated JSON entries
   5. Sport auto-detects from the channel the command is run in, with manual override available
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [x] 08-01-PLAN.md — Data model extension (type field), store updates (position filter), and TTL cache module
-- [ ] 08-02-PLAN.md — Transfer command updates with type choice, grouped display, and pagination at 10/page
+- [x] 08-02-PLAN.md — Transfer command updates with type choice, grouped display, and pagination at 10/page
+- [ ] 08-03-PLAN.md — Gap closure: wire TTLCache into transfer commands for cached repeated queries
 
 ### Phase 9: Career Stats
 **Goal**: Users can look up college career stats for any player on the KU recruiting list, with sport-appropriate formatting and fuzzy name matching
@@ -88,5 +89,5 @@ Phases execute in numeric order: 7 -> 8 -> 9
 | 5. Summary Language Controls | v1.0 | 1/1 | Complete | 2026-04-04 |
 | 6. Error Alerting | v1.0 | 2/2 | Complete | 2026-04-04 |
 | 7. Recruiting List and Foundation | v1.1 | 2/2 | Complete   | 2026-04-07 |
-| 8. Transfer Portal | v1.1 | 1/2 | In Progress|  |
+| 8. Transfer Portal | v1.1 | 2/3 | In Progress|  |
 | 9. Career Stats | v1.1 | 0/0 | Not started | - |
