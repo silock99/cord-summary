@@ -7,6 +7,7 @@ from pathlib import Path
 
 from bot.commands.career import register_career_commands
 from bot.commands.post_summary import register_post_summary_command
+from bot.commands.roster import register_roster_commands
 from bot.commands.recruiting import register_recruit_commands
 from bot.commands.summary import register_summary_command
 from bot.commands.transfers import register_transfer_commands
@@ -32,6 +33,7 @@ class SummaryBot(commands.Bot):
         self.recruit_store = RecruitingStore(Path("data/recruits.json"))
         self.transfer_store = RecruitingStore(Path("data/transfers.json"))
         self.transfer_cache = TTLCache(default_ttl=900.0)  # 15-minute TTL
+        self.roster_store = RecruitingStore(Path("data/roster.json"))
 
     async def setup_hook(self) -> None:
         """Register commands and sync to the configured guild (INFRA-03). Fires once before connecting."""
@@ -41,6 +43,7 @@ class SummaryBot(commands.Bot):
         # Load recruiting/transfer data from JSON files
         self.recruit_store.load()
         self.transfer_store.load()
+        self.roster_store.load()
 
         # Register recruiting and transfer commands (Phase 7)
         register_recruit_commands(self)
@@ -48,6 +51,9 @@ class SummaryBot(commands.Bot):
 
         # Register career stats command (Phase 9)
         register_career_commands(self)
+
+        # Register roster commands (Phase 10)
+        register_roster_commands(self)
 
         guild = discord.Object(id=self.settings.guild_id)
         self.tree.copy_global_to(guild=guild)

@@ -34,17 +34,18 @@ def register_career_commands(bot) -> None:
         name="stats",
         description="Look up college career stats for a player",
     )
-    @app_commands.describe(player="Player name (autocompletes from recruit/transfer lists)")
+    @app_commands.describe(player="Player name (autocompletes from recruit/transfer/roster lists)")
     @require_sport_channel()
     async def stats(interaction: discord.Interaction, player: str) -> None:
         await interaction.response.defer(ephemeral=True)
         sport = get_sport_from_channel(interaction.channel_id, interaction.client.settings)
         emoji = SPORT_EMOJI.get(sport, "")
 
-        # Search both stores for the player
+        # Search all three stores for the player
         all_players = (
             bot.recruit_store.list_players(sport)
             + bot.transfer_store.list_players(sport)
+            + bot.roster_store.list_players(sport)
         )
 
         # Exact match (case-insensitive)
@@ -115,10 +116,11 @@ def register_career_commands(bot) -> None:
         sport = get_sport_from_channel(interaction.channel_id, interaction.client.settings)
         if sport is None:
             return []
-        # Combine both stores
+        # Combine all three stores
         all_players = (
             bot.recruit_store.list_players(sport)
             + bot.transfer_store.list_players(sport)
+            + bot.roster_store.list_players(sport)
         )
         # Deduplicate by name (case-insensitive)
         seen = set()
