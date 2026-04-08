@@ -149,6 +149,94 @@ class TestGetSportFromChannel:
         assert get_sport_from_channel(999, settings) is None
 
 
+class TestPlayerEntryType:
+    """PlayerEntry type field with backward compatibility."""
+
+    def test_player_entry_type_default(self) -> None:
+        entry = PlayerEntry(name="X", position="QB", school="Bama", stars=4)
+        assert entry.type == "target"
+
+    def test_player_entry_type_explicit(self) -> None:
+        entry = PlayerEntry(name="X", position="QB", school="Bama", stars=4, type="outgoing")
+        assert entry.type == "outgoing"
+
+    def test_player_entry_backward_compat_from_dict(self) -> None:
+        data = {
+            "name": "X",
+            "position": "QB",
+            "school": "Bama",
+            "stars": 4,
+            "added_at": "2026-01-01T00:00:00+00:00",
+        }
+        entry = PlayerEntry.from_dict(data)
+        assert entry.type == "target"
+
+    def test_player_entry_to_dict_includes_type(self) -> None:
+        entry = PlayerEntry(name="X", position="QB", school="Bama", stars=4)
+        d = entry.to_dict()
+        assert "type" in d
+        assert d["type"] == "target"
+
+    def test_player_entry_roundtrip_type(self) -> None:
+        entry = PlayerEntry(name="X", position="QB", school="Bama", stars=4, type="outgoing")
+        restored = PlayerEntry.from_dict(entry.to_dict())
+        assert restored.type == "outgoing"
+
+
+class TestAddPlayerType:
+    """RecruitingStore.add_player with player_type parameter."""
+
+    def test_add_player_with_type_outgoing(self, tmp_path: Path) -> None:
+        store = RecruitingStore(filepath=tmp_path / "recruits.json")
+        result = store.add_player("football", "John", "QB", "Bama", 4, player_type="outgoing")
+        assert result is not None
+        assert result.type == "outgoing"
+
+    def test_add_player_default_type_target(self, tmp_path: Path) -> None:
+        store = RecruitingStore(filepath=tmp_path / "recruits.json")
+        result = store.add_player("football", "Jane", "WR", "Ohio St", 3)
+        assert result is not None
+        assert result.type == "target"
+
+    def test_add_player_duplicate_with_different_type(self, tmp_path: Path) -> None:
+        store = RecruitingStore(filepath=tmp_path / "recruits.json")
+        store.add_player("football", "John", "QB", "Bama", 4, player_type="target")
+        result = store.add_player("football", "John", "QB", "Bama", 4, player_type="outgoing")
+        assert result is None
+
+
+class TestListPlayersPositionFilter:
+    """RecruitingStore.list_players with position filtering."""
+
+    def test_list_players_position_filter(self, tmp_path: Path) -> None:
+        store = RecruitingStore(filepath=tmp_path / "recruits.json")
+        store.add_player("football", "Player A", "QB", "Texas", 4)
+        store.add_player("football", "Player B", "WR", "Oklahoma", 3)
+        players = store.list_players("football", position="QB")
+        assert len(players) == 1
+        assert players[0].name == "Player A"
+
+    def test_list_players_position_filter_case_insensitive(self, tmp_path: Path) -> None:
+        store = RecruitingStore(filepath=tmp_path / "recruits.json")
+        store.add_player("football", "Player A", "QB", "Texas", 4)
+        players = store.list_players("football", position="qb")
+        assert len(players) == 1
+        assert players[0].name == "Player A"
+
+    def test_list_players_position_filter_no_match(self, tmp_path: Path) -> None:
+        store = RecruitingStore(filepath=tmp_path / "recruits.json")
+        store.add_player("football", "Player A", "QB", "Texas", 4)
+        players = store.list_players("football", position="RB")
+        assert len(players) == 0
+
+    def test_list_players_no_position_returns_all(self, tmp_path: Path) -> None:
+        store = RecruitingStore(filepath=tmp_path / "recruits.json")
+        store.add_player("football", "Player A", "QB", "Texas", 4)
+        store.add_player("football", "Player B", "WR", "Oklahoma", 3)
+        players = store.list_players("football")
+        assert len(players) == 2
+
+
 class _MockSettings:
     """Minimal mock for Settings with channel ID lists."""
 
