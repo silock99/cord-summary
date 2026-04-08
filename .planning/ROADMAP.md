@@ -25,7 +25,7 @@
 - [x] **Phase 8: Transfer Portal** - Portal lookup for football (CFBD API) and basketball (admin-curated), with caching, pagination, and position filtering (completed 2026-04-07)
 - [x] **Phase 9: Career Stats** - College career stats for recruiting list players with fuzzy name matching and sport-specific formatting (completed 2026-04-08)
 - [x] **Phase 10: Current Roster** - Import and manage the current KU roster for both football and basketball, with stats fetching on add (completed 2026-04-08)
-- [ ] **Phase 11: Help Command** - Display all bot capabilities and command usage so users know their options
+- [x] **Phase 11: Help Command** - Display all bot capabilities and command usage so users know their options (completed 2026-04-08)
 
 ## Phase Details
 
@@ -101,7 +101,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 11-01-PLAN.md — /cordbot command with static registry, permission filtering, and categorized embed
+- [x] 11-01-PLAN.md — /cordbot command with static registry, permission filtering, and categorized embed
 
 ## Progress
 
@@ -120,4 +120,4 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11
 | 8. Transfer Portal | v1.1 | 3/3 | Complete | 2026-04-07 |
 | 9. Career Stats | v1.1 | 2/2 | Complete | 2026-04-08 |
 | 10. Current Roster | v1.1 | 2/2 | Complete    | 2026-04-08 |
-| 11. Help Command | v1.1 | 0/1 | Not started | - |
+| 11. Help Command | v1.1 | 1/1 | Complete   | 2026-04-08 |

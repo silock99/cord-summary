@@ -43,8 +43,8 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 
 ### Help Command
 
-- [ ] **HELP-01**: /cordbot slash command displays all available bot commands with descriptions, parameters, and usage examples in a categorized embed
-- [ ] **HELP-02**: Help output is permission-filtered -- non-admins do not see admin-only commands, non-editors do not see editor-only commands
+- [x] **HELP-01**: /cordbot slash command displays all available bot commands with descriptions, parameters, and usage examples in a categorized embed
+- [x] **HELP-02**: Help output is permission-filtered -- non-admins do not see admin-only commands, non-editors do not see editor-only commands
 
 ### Infrastructure
 
@@ -102,8 +102,8 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 | ROSTER-04 | Phase 10 | Complete |
 | ROSTER-05 | Phase 10 | Complete |
 | ROSTER-06 | Phase 10 | Complete |
-| HELP-01 | Phase 11 | Pending |
-| HELP-02 | Phase 11 | Pending |
+| HELP-01 | Phase 11 | Complete |
+| HELP-02 | Phase 11 | Complete |
 | INFRA-01 | Phase 8 | Pending |
 | INFRA-02 | Phase 9 | Complete |
 | INFRA-03 | Phase 8 | Pending |
