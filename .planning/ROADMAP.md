@@ -24,7 +24,7 @@
 - [x] **Phase 7: Recruiting List and Foundation** - Admin-curated KU recruiting list with JSON persistence, sport autocomplete, and channel-to-sport config (completed 2026-04-07)
 - [x] **Phase 8: Transfer Portal** - Portal lookup for football (CFBD API) and basketball (admin-curated), with caching, pagination, and position filtering (completed 2026-04-07)
 - [x] **Phase 9: Career Stats** - College career stats for recruiting list players with fuzzy name matching and sport-specific formatting (completed 2026-04-08)
-- [x] **Phase 10: Current Roster** - Import and manage the current KU roster for both football and basketball, with stats fetching on add (completed 2026-04-08)
+- [x] **Phase 10: Current Roster** - Import and manage the current KU roster for both football and basketball, with stats fetching on add (completed 2026-04-08)
 - [ ] **Phase 11: Help Command** - Display all bot capabilities and command usage so users know their options
 
 ## Phase Details
@@ -92,16 +92,16 @@ Plans:
 - [x] 10-02-PLAN.md — Roster commands (import/list), client wiring, career command integration
 
 ### Phase 11: Help Command
-**Goal**: Users can run a help command to see all bot capabilities and how to use each command
+**Goal**: Users can run /cordbot to see all bot capabilities grouped by category with permission-filtered visibility
 **Depends on**: Phase 10
-**Requirements**: TBD
+**Requirements**: HELP-01, HELP-02
 **Success Criteria** (what must be TRUE):
   1. A slash command displays all available bot commands with descriptions and usage examples
   2. Help output is formatted as an embed and covers every registered command
-**Plans**: 0 plans
+**Plans**: 1 plan
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 11 to break down)
+- [ ] 11-01-PLAN.md — /cordbot command with static registry, permission filtering, and categorized embed
 
 ## Progress
 
@@ -120,4 +120,4 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11
 | 8. Transfer Portal | v1.1 | 3/3 | Complete | 2026-04-07 |
 | 9. Career Stats | v1.1 | 2/2 | Complete | 2026-04-08 |
 | 10. Current Roster | v1.1 | 2/2 | Complete    | 2026-04-08 |
-| 11. Help Command | v1.1 | 0/0 | Not started | - |
+| 11. Help Command | v1.1 | 0/1 | Not started | - |

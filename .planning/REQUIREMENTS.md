@@ -41,6 +41,11 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 - [x] **ROSTER-05**: Roster players appear in /stats lookups and autocomplete alongside recruits and transfers
 - [x] **ROSTER-06**: Roster data persists to JSON file and survives bot restarts
 
+### Help Command
+
+- [ ] **HELP-01**: /cordbot slash command displays all available bot commands with descriptions, parameters, and usage examples in a categorized embed
+- [ ] **HELP-02**: Help output is permission-filtered -- non-admins do not see admin-only commands, non-editors do not see editor-only commands
+
 ### Infrastructure
 
 - [ ] **INFRA-01**: CFBD API integration for football portal data and stats
@@ -97,6 +102,8 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 | ROSTER-04 | Phase 10 | Complete |
 | ROSTER-05 | Phase 10 | Complete |
 | ROSTER-06 | Phase 10 | Complete |
+| HELP-01 | Phase 11 | Pending |
+| HELP-02 | Phase 11 | Pending |
 | INFRA-01 | Phase 8 | Pending |
 | INFRA-02 | Phase 9 | Complete |
 | INFRA-03 | Phase 8 | Pending |
@@ -104,10 +111,10 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 | INFRA-05 | Phase 7 | Complete |
 
 **Coverage:**
-- v1.1 requirements: 27 total
-- Mapped to phases: 27
+- v1.1 requirements: 29 total
+- Mapped to phases: 29
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-07*
-*Last updated: 2026-04-08 after Phase 10 planning*
+*Last updated: 2026-04-08 after Phase 11 planning*
