@@ -57,14 +57,15 @@ class RecruitingStore:
             raise
 
     def add_player(
-        self, sport: str, name: str, position: str, school: str, stars: int
+        self, sport: str, name: str, position: str, school: str, stars: int,
+        player_type: str = "target",
     ) -> PlayerEntry | None:
         """Add a player to a sport list. Returns None if duplicate name (case-insensitive)."""
         players = self._data.get(sport, [])
         # Check for case-insensitive duplicate
         if any(p.name.lower() == name.lower() for p in players):
             return None
-        entry = PlayerEntry(name=name, position=position, school=school, stars=stars)
+        entry = PlayerEntry(name=name, position=position, school=school, stars=stars, type=player_type)
         players.append(entry)
         self._data[sport] = players
         self.save()
@@ -92,9 +93,14 @@ class RecruitingStore:
         )
         return (None, suggestions)
 
-    def list_players(self, sport: str) -> list[PlayerEntry]:
-        """Return players for a sport, sorted by position."""
+    def list_players(self, sport: str, position: str | None = None) -> list[PlayerEntry]:
+        """Return players for a sport, sorted by position.
+
+        If position is provided, filter to only players at that position (case-insensitive).
+        """
         players = self._data.get(sport, [])
+        if position:
+            players = [p for p in players if p.position.lower() == position.lower()]
         return sorted(players, key=lambda p: p.position)
 
 
