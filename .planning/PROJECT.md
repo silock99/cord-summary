@@ -38,6 +38,7 @@ Users can quickly catch up on what they missed without reading through hundreds 
 - ✓ Current roster import and display with jersey numbers, positions, and class years — Validated in Phase 10: Current Roster
 - ✓ Roster players integrated into /stats lookups — Validated in Phase 10: Current Roster
 - ✓ Career stats lookup for players on KU recruiting list — Validated in Phase 9: Career Stats
+- ✓ /cordbot help command with categorized, permission-filtered command listing — Validated in Phase 11: Help Command
 - ✓ KU recruiting list with role-gated add/remove (name, position, previous school, star rating) — Validated in Phase 7: Recruiting List and Foundation
 - ✓ KU recruiting list view command filterable by sport — Validated in Phase 7: Recruiting List and Foundation
 - ✓ JSON file persistence for recruiting data — Validated in Phase 7: Recruiting List and Foundation
@@ -101,6 +102,7 @@ Persistence: JSON file for DM subscriber opt-ins, text files for language blockl
 | Stats fetched at add-time, stored in player entry | Avoids API call on every /career lookup; stats cached in JSON alongside player data | ✓ Decided Phase 9 |
 | Roster replace-mode with empty-response guard | Import replaces sport roster (not append), but empty API response preserves existing data | ✓ Decided Phase 10 |
 | Roster type="roster" distinct from target/outgoing | Roster players distinguished in PlayerEntry.type — separate from recruit and transfer stores | ✓ Decided Phase 10 |
+| Static command registry for /cordbot | Hardcoded list instead of dynamic discovery — simpler, no coupling to command modules | ✓ Decided Phase 11 |
 
 ## Evolution
 
@@ -120,4 +122,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-08 after Phase 10 completion*
+*Last updated: 2026-04-08 after Phase 11 completion*
