@@ -9,6 +9,7 @@ class PlayerEntry:
     school: str
     stars: int  # 0 for unrated, 1-5 for rated
     added_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    type: str = "target"
 
     def to_dict(self) -> dict:
         return {
@@ -17,6 +18,7 @@ class PlayerEntry:
             "school": self.school,
             "stars": self.stars,
             "added_at": self.added_at,
+            "type": self.type,
         }
 
     @classmethod

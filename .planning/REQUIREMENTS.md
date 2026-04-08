@@ -10,10 +10,10 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 ### Transfer Portal
 
 - [ ] **PORTAL-01**: User can look up transfer portal players filtered by sport and school
-- [ ] **PORTAL-02**: User can optionally filter portal results by position
+- [x] **PORTAL-02**: User can optionally filter portal results by position
 - [ ] **PORTAL-03**: Portal results display player name, position, original school, and star rating in embed format
 - [ ] **PORTAL-04**: Portal results paginate with button navigation when exceeding one embed
-- [ ] **PORTAL-05**: Portal API responses are cached (15-30 min TTL) to reduce API call usage
+- [x] **PORTAL-05**: Portal API responses are cached (15-30 min TTL) to reduce API call usage
 - [ ] **PORTAL-06**: Sport auto-detected from channel-to-sport mapping config, with manual override
 
 ### Recruiting
@@ -34,9 +34,9 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: CFBD API integration for football portal data and stats
+- [x] **INFRA-01**: CFBD API integration for football portal data and stats
 - [ ] **INFRA-02**: CBBD API integration for basketball stats
-- [ ] **INFRA-03**: MBB transfer portal uses admin-curated entries (no API available)
+- [x] **INFRA-03**: MBB transfer portal uses admin-curated entries (no API available)
 - [x] **INFRA-04**: Channel-to-sport mapping configurable via environment variables
 - [x] **INFRA-05**: Authorized user IDs configurable for recruiting list management
 
@@ -67,10 +67,10 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | PORTAL-01 | Phase 8 | Pending |
-| PORTAL-02 | Phase 8 | Pending |
+| PORTAL-02 | Phase 8 | Complete |
 | PORTAL-03 | Phase 8 | Pending |
 | PORTAL-04 | Phase 8 | Pending |
-| PORTAL-05 | Phase 8 | Pending |
+| PORTAL-05 | Phase 8 | Complete |
 | PORTAL-06 | Phase 8 | Pending |
 | RECRUIT-01 | Phase 7 | Complete |
 | RECRUIT-02 | Phase 7 | Complete |
@@ -82,9 +82,9 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 | STATS-02 | Phase 9 | Pending |
 | STATS-03 | Phase 9 | Pending |
 | STATS-04 | Phase 9 | Pending |
-| INFRA-01 | Phase 8 | Pending |
+| INFRA-01 | Phase 8 | Complete |
 | INFRA-02 | Phase 9 | Pending |
-| INFRA-03 | Phase 8 | Pending |
+| INFRA-03 | Phase 8 | Complete |
 | INFRA-04 | Phase 7 | Complete |
 | INFRA-05 | Phase 7 | Complete |
 

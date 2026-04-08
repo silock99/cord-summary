@@ -56,7 +56,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Data model extension (type field), store updates (position filter), and TTL cache module
+- [x] 08-01-PLAN.md — Data model extension (type field), store updates (position filter), and TTL cache module
 - [ ] 08-02-PLAN.md — Transfer command updates with type choice, grouped display, and pagination at 10/page
 
 ### Phase 9: Career Stats
@@ -88,5 +88,5 @@ Phases execute in numeric order: 7 -> 8 -> 9
 | 5. Summary Language Controls | v1.0 | 1/1 | Complete | 2026-04-04 |
 | 6. Error Alerting | v1.0 | 2/2 | Complete | 2026-04-04 |
 | 7. Recruiting List and Foundation | v1.1 | 2/2 | Complete   | 2026-04-07 |
-| 8. Transfer Portal | v1.1 | 0/2 | Planning | - |
+| 8. Transfer Portal | v1.1 | 1/2 | In Progress|  |
 | 9. Career Stats | v1.1 | 0/0 | Not started | - |
