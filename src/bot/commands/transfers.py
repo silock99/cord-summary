@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 import discord
 from discord import app_commands
 
+from bot.stats.basketball import fetch_basketball_stats
+from bot.stats.football import fetch_football_stats
 from bot.storage.recruiting_store import get_sport_from_channel
 
 logger = logging.getLogger(__name__)
@@ -72,14 +74,27 @@ def register_transfer_commands(bot) -> None:
         player = bot.transfer_store.add_player(sport, name, position, school, stars, player_type=transfer_type)
         if player is not None:
             bot.transfer_cache.clear()
+            # Fetch career stats (non-fatal on failure)
+            try:
+                if sport == "football":
+                    stats = await fetch_football_stats(bot.settings, name, school)
+                else:
+                    stats = await fetch_basketball_stats(bot.settings, name, school)
+                if stats:
+                    player.stats = stats
+                    bot.transfer_store.save()
+                    logger.info(f"Fetched career stats for {name}")
+            except Exception:
+                logger.warning(f"Failed to fetch stats for {name}", exc_info=True)
         if player is None:
             await interaction.edit_original_response(
                 content=f"**{name}** is already on the {sport} transfer list."
             )
             return
         star_text = f" {STAR_EMOJI * stars}" if stars > 0 else ""
+        stats_note = " (career stats loaded)" if player.stats else ""
         await interaction.edit_original_response(
-            content=f"Added **{name}** ({position}, {school}){star_text} to the {sport} transfer list."
+            content=f"Added **{name}** ({position}, {school}){star_text} to the {sport} transfer list.{stats_note}"
         )
         logger.info(f"/transfer-add: {interaction.user} added {name} to {sport}")
 
