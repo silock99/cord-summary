@@ -7,7 +7,7 @@ stopped_at: Completed 09-02-PLAN.md
 last_updated: "2026-04-08T06:31:34.438Z"
 last_activity: 2026-04-08
 progress:
-  total_phases: 3
+  total_phases: 5
   completed_phases: 3
   total_plans: 7
   completed_plans: 7
@@ -75,6 +75,11 @@ Progress: [░░░░░░░░░░] 0% (v1.1: 0/3 phases)
 ### Pending Todos
 
 None yet.
+
+### Roadmap Evolution
+
+- Phase 10 added: Current Roster — import/manage KU roster for both sports with stats fetching
+- Phase 11 added: Help Command — display bot capabilities and command usage
 
 ### Blockers/Concerns
 

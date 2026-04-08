@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v1.0 MVP** — Phases 1-6 (shipped 2026-04-07) — [archive](milestones/v1.0-ROADMAP.md)
-- 🚧 **v1.1 Athletics Intelligence** — Phases 7-9 (in progress)
+- 🚧 **v1.1 Athletics Intelligence** — Phases 7-11 (in progress)
 
 ## Phases
 
@@ -22,8 +22,10 @@
 ### v1.1 Athletics Intelligence
 
 - [x] **Phase 7: Recruiting List and Foundation** - Admin-curated KU recruiting list with JSON persistence, sport autocomplete, and channel-to-sport config (completed 2026-04-07)
-- [ ] **Phase 8: Transfer Portal** - Portal lookup for football (CFBD API) and basketball (admin-curated), with caching, pagination, and position filtering
-- [ ] **Phase 9: Career Stats** - College career stats for recruiting list players with fuzzy name matching and sport-specific formatting
+- [x] **Phase 8: Transfer Portal** - Portal lookup for football (CFBD API) and basketball (admin-curated), with caching, pagination, and position filtering (completed 2026-04-07)
+- [x] **Phase 9: Career Stats** - College career stats for recruiting list players with fuzzy name matching and sport-specific formatting (completed 2026-04-08)
+- [ ] **Phase 10: Current Roster** - Import and manage the current KU roster for both football and basketball, with stats fetching on add
+- [ ] **Phase 11: Help Command** - Display all bot capabilities and command usage so users know their options
 
 ## Phase Details
 
@@ -89,5 +91,32 @@ Phases execute in numeric order: 7 -> 8 -> 9
 | 5. Summary Language Controls | v1.0 | 1/1 | Complete | 2026-04-04 |
 | 6. Error Alerting | v1.0 | 2/2 | Complete | 2026-04-04 |
 | 7. Recruiting List and Foundation | v1.1 | 2/2 | Complete   | 2026-04-07 |
-| 8. Transfer Portal | v1.1 | 2/3 | In Progress|  |
-| 9. Career Stats | v1.1 | 0/2 | Not started | - |
+| 8. Transfer Portal | v1.1 | 3/3 | Complete | 2026-04-07 |
+| 9. Career Stats | v1.1 | 2/2 | Complete | 2026-04-08 |
+| 10. Current Roster | v1.1 | 0/0 | Not started | - |
+| 11. Help Command | v1.1 | 0/0 | Not started | - |
+
+### Phase 10: Current Roster
+**Goal**: Users can import and manage the current KU roster for both football and basketball, with career stats fetched automatically on add — same pattern as recruits and transfers
+**Depends on**: Phase 9
+**Requirements**: TBD
+**Success Criteria** (what must be TRUE):
+  1. Users can add current roster players for football and basketball with stats auto-fetched on add
+  2. Roster players appear in /stats lookups alongside recruits and transfers
+  3. Roster data persists to JSON and survives bot restarts
+**Plans**: 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 10 to break down)
+
+### Phase 11: Help Command
+**Goal**: Users can run a help command to see all bot capabilities and how to use each command
+**Depends on**: Phase 10
+**Requirements**: TBD
+**Success Criteria** (what must be TRUE):
+  1. A slash command displays all available bot commands with descriptions and usage examples
+  2. Help output is formatted as an embed and covers every registered command
+**Plans**: 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 11 to break down)
