@@ -31,12 +31,12 @@ def register_career_commands(bot) -> None:
         return app_commands.check(predicate)
 
     @bot.tree.command(
-        name="career",
+        name="stats",
         description="Look up college career stats for a player",
     )
     @app_commands.describe(player="Player name (autocompletes from recruit/transfer lists)")
     @require_sport_channel()
-    async def career(interaction: discord.Interaction, player: str) -> None:
+    async def stats(interaction: discord.Interaction, player: str) -> None:
         await interaction.response.defer(ephemeral=True)
         sport = get_sport_from_channel(interaction.channel_id, interaction.client.settings)
         emoji = SPORT_EMOJI.get(sport, "")
@@ -104,10 +104,10 @@ def register_career_commands(bot) -> None:
         )
         embed.set_footer(text=f"{match.school} | {match.position}")
         await interaction.edit_original_response(embeds=[embed])
-        logger.info(f"/career: {interaction.user} looked up {match.name}")
+        logger.info(f"/stats: {interaction.user} looked up {match.name}")
 
     # Autocomplete callback
-    @career.autocomplete("player")
+    @stats.autocomplete("player")
     async def career_player_autocomplete(
         interaction: discord.Interaction,
         current: str,
@@ -156,4 +156,4 @@ def register_career_commands(bot) -> None:
             else:
                 await interaction.response.send_message(msg, ephemeral=True)
 
-    career.error(career_error)
+    stats.error(career_error)
