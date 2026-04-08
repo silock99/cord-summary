@@ -34,11 +34,11 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 
 ### Current Roster
 
-- [ ] **ROSTER-01**: Editors/admins can bulk-import current KU roster from CFBD (football) or CBBD (basketball) API
-- [ ] **ROSTER-02**: Each import replaces the existing roster for that sport (replace mode, not append)
+- [x] **ROSTER-01**: Editors/admins can bulk-import current KU roster from CFBD (football) or CBBD (basketball) API
+- [x] **ROSTER-02**: Each import replaces the existing roster for that sport (replace mode, not append)
 - [x] **ROSTER-03**: Career stats auto-fetched for each imported player during import
-- [ ] **ROSTER-04**: /roster-list displays roster players alphabetically with name, position, jersey number, and class year
-- [ ] **ROSTER-05**: Roster players appear in /stats lookups and autocomplete alongside recruits and transfers
+- [x] **ROSTER-04**: /roster-list displays roster players alphabetically with name, position, jersey number, and class year
+- [x] **ROSTER-05**: Roster players appear in /stats lookups and autocomplete alongside recruits and transfers
 - [x] **ROSTER-06**: Roster data persists to JSON file and survives bot restarts
 
 ### Infrastructure
@@ -91,11 +91,11 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 | STATS-02 | Phase 9 | Complete |
 | STATS-03 | Phase 9 | Complete |
 | STATS-04 | Phase 9 | Complete |
-| ROSTER-01 | Phase 10 | Pending |
-| ROSTER-02 | Phase 10 | Pending |
+| ROSTER-01 | Phase 10 | Complete |
+| ROSTER-02 | Phase 10 | Complete |
 | ROSTER-03 | Phase 10 | Complete |
-| ROSTER-04 | Phase 10 | Pending |
-| ROSTER-05 | Phase 10 | Pending |
+| ROSTER-04 | Phase 10 | Complete |
+| ROSTER-05 | Phase 10 | Complete |
 | ROSTER-06 | Phase 10 | Complete |
 | INFRA-01 | Phase 8 | Pending |
 | INFRA-02 | Phase 9 | Complete |
