@@ -49,6 +49,10 @@ class Settings(BaseSettings):
         parts = [p.strip() for p in raw.split(",")]
         return [int(p) for p in parts if p]
 
+    # CFBD/CBBD API keys (Phase 9: Career Stats)
+    cfbd_api_key: str = ""
+    cbbd_api_key: str = ""
+
     # Recruiting editor IDs (comma-separated) -- per D-11, INFRA-05
     recruiting_editor_ids_raw: str = Field(default="", alias="RECRUITING_EDITOR_IDS")
 
