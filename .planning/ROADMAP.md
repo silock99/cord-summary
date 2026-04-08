@@ -69,11 +69,11 @@ Plans:
   2. Basketball stats display as PPG, RPG, APG, FG%, 3P% per season; football stats display as passing, rushing, receiving yards and TDs per season
   3. Player name resolution handles variations (nicknames, abbreviations, suffixes) via fuzzy matching, surfacing "did you mean?" when no exact match is found
   4. Stats are fetched from CBBD API for basketball and CFBD API for football, behind a protocol interface that allows source swapping
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 09-01: TBD
-- [ ] 09-02: TBD
+- [ ] 09-01-PLAN.md — Stats infrastructure: SDK install, PlayerEntry extension, API fetch modules, monospace formatter
+- [ ] 09-02-PLAN.md — Command wiring: stats-on-add hooks, /career command with autocomplete and fuzzy matching
 
 ## Progress
 
@@ -90,4 +90,4 @@ Phases execute in numeric order: 7 -> 8 -> 9
 | 6. Error Alerting | v1.0 | 2/2 | Complete | 2026-04-04 |
 | 7. Recruiting List and Foundation | v1.1 | 2/2 | Complete   | 2026-04-07 |
 | 8. Transfer Portal | v1.1 | 2/3 | In Progress|  |
-| 9. Career Stats | v1.1 | 0/0 | Not started | - |
+| 9. Career Stats | v1.1 | 0/2 | Not started | - |
