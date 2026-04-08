@@ -70,6 +70,8 @@ def register_transfer_commands(bot) -> None:
         sport = get_sport_from_channel(interaction.channel_id, interaction.client.settings)
         transfer_type = type.value if type else "target"
         player = bot.transfer_store.add_player(sport, name, position, school, stars, player_type=transfer_type)
+        if player is not None:
+            bot.transfer_cache.clear()
         if player is None:
             await interaction.edit_original_response(
                 content=f"**{name}** is already on the {sport} transfer list."
@@ -96,6 +98,7 @@ def register_transfer_commands(bot) -> None:
         sport = get_sport_from_channel(interaction.channel_id, interaction.client.settings)
         removed, suggestions = bot.transfer_store.remove_player(sport, name)
         if removed:
+            bot.transfer_cache.clear()
             await interaction.edit_original_response(
                 content=f"Removed **{removed.name}** from the {sport} transfer list."
             )
@@ -123,7 +126,13 @@ def register_transfer_commands(bot) -> None:
     ) -> None:
         await interaction.response.defer(ephemeral=True)
         sport = get_sport_from_channel(interaction.channel_id, interaction.client.settings)
-        players = bot.transfer_store.list_players(sport, position=position)
+        cache_key = f"transfer:{sport}:{position.lower()}" if position else f"transfer:{sport}"
+        cached = bot.transfer_cache.get(cache_key)
+        if cached is not None:
+            players = cached
+        else:
+            players = bot.transfer_store.list_players(sport, position=position)
+            bot.transfer_cache.set(cache_key, players)
         emoji = SPORT_EMOJI.get(sport, "")
         title = f"{emoji} KU {SPORT_TITLE.get(sport, sport.title())} Transfer List"
 

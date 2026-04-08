@@ -13,6 +13,7 @@ from bot.config import Settings
 from bot.language_filter import load_language_config
 from bot.providers.base import SummaryProvider
 from bot.scheduling.overnight import OvernightScheduler
+from bot.storage.cache import TTLCache
 from bot.storage.recruiting_store import RecruitingStore
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,7 @@ class SummaryBot(commands.Bot):
         self.scheduler: OvernightScheduler | None = None
         self.recruit_store = RecruitingStore(Path("data/recruits.json"))
         self.transfer_store = RecruitingStore(Path("data/transfers.json"))
+        self.transfer_cache = TTLCache(default_ttl=900.0)  # 15-minute TTL
 
     async def setup_hook(self) -> None:
         """Register commands and sync to the configured guild (INFRA-03). Fires once before connecting."""
