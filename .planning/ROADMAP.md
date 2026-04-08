@@ -88,7 +88,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 10-01-PLAN.md — PlayerEntry extension with jersey_number/class_year, roster fetch functions for CFBD and CBBD
+- [x] 10-01-PLAN.md — PlayerEntry extension with jersey_number/class_year, roster fetch functions for CFBD and CBBD
 - [ ] 10-02-PLAN.md — Roster commands (import/list), client wiring, career command integration
 
 ### Phase 11: Help Command
@@ -119,5 +119,5 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11
 | 7. Recruiting List and Foundation | v1.1 | 2/2 | Complete   | 2026-04-07 |
 | 8. Transfer Portal | v1.1 | 3/3 | Complete | 2026-04-07 |
 | 9. Career Stats | v1.1 | 2/2 | Complete | 2026-04-08 |
-| 10. Current Roster | v1.1 | 0/2 | Not started | - |
+| 10. Current Roster | v1.1 | 1/2 | In Progress|  |
 | 11. Help Command | v1.1 | 0/0 | Not started | - |
