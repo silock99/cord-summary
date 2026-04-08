@@ -14,7 +14,7 @@ SPORT_EMOJI = {"football": "\U0001f3c8", "basketball": "\U0001f3c0"}
 SPORT_TITLE = {"football": "Football", "basketball": "Basketball"}
 KU_BLUE = 0x0051BA
 STAR_EMOJI = "\u2b50"
-MAX_FIELDS_PER_EMBED = 25
+MAX_PLAYERS_PER_EMBED = 10
 
 
 def register_transfer_commands(bot) -> None:
@@ -113,13 +113,28 @@ def register_transfer_commands(bot) -> None:
         name="transfer-list",
         description="View the transfer list for this channel's sport",
     )
+    @app_commands.describe(
+        position="Filter by position (e.g., QB, WR, PG)",
+    )
     @require_sport_channel()
-    async def transfer_list(interaction: discord.Interaction) -> None:
+    async def transfer_list(
+        interaction: discord.Interaction,
+        position: str | None = None,
+    ) -> None:
         await interaction.response.defer(ephemeral=True)
         sport = get_sport_from_channel(interaction.channel_id, interaction.client.settings)
-        players = bot.transfer_store.list_players(sport)
+        players = bot.transfer_store.list_players(sport, position=position)
         emoji = SPORT_EMOJI.get(sport, "")
         title = f"{emoji} KU {SPORT_TITLE.get(sport, sport.title())} Transfer List"
+
+        if not players and position:
+            embed = discord.Embed(
+                title=title,
+                description=f"No {position.upper()} players on the {sport} transfer list.",
+                color=KU_BLUE,
+            )
+            await interaction.edit_original_response(embeds=[embed])
+            return
 
         if not players:
             embed = discord.Embed(
@@ -130,25 +145,47 @@ def register_transfer_commands(bot) -> None:
             await interaction.edit_original_response(embeds=[embed])
             return
 
+        # Separate players by type
+        outgoing = [p for p in players if p.type == "outgoing"]
+        targets = [p for p in players if p.type == "target"]
+
+        sections = []
+        if outgoing:
+            sections.append(("\U0001f6aa Transfers Out", outgoing))
+        if targets:
+            sections.append(("\U0001f3af Transfer Targets", targets))
+
         embeds = []
         current_embed = discord.Embed(title=title, color=KU_BLUE)
-        field_count = 0
+        player_count = 0
 
-        for player in players:
-            if field_count >= MAX_FIELDS_PER_EMBED:
-                embeds.append(current_embed)
-                current_embed = discord.Embed(title=f"{title} (cont.)", color=KU_BLUE)
-                field_count = 0
-
-            star_display = STAR_EMOJI * player.stars if player.stars else "Unrated"
-            field_name = f"{player.name} {star_display}"[:256]
-            added_dt = datetime.fromisoformat(player.added_at)
-            field_value = (
-                f"{player.position} | {player.school}\n"
-                f"Added {discord.utils.format_dt(added_dt, style='R')}"
+        for section_title, section_players in sections:
+            # Add section header (does NOT count toward player limit)
+            current_embed.add_field(
+                name=section_title,
+                value=f"*{len(section_players)} player(s)*",
+                inline=False,
             )
-            current_embed.add_field(name=field_name, value=field_value, inline=False)
-            field_count += 1
+            for idx, player in enumerate(section_players):
+                if player_count >= MAX_PLAYERS_PER_EMBED:
+                    embeds.append(current_embed)
+                    current_embed = discord.Embed(title=f"{title} (cont.)", color=KU_BLUE)
+                    player_count = 0
+                    # Re-add section header on continuation embed
+                    current_embed.add_field(
+                        name=section_title,
+                        value="*continued*",
+                        inline=False,
+                    )
+                star_display = STAR_EMOJI * player.stars if player.stars else "Unrated"
+                field_name = f"{player.name} {star_display}"[:256]
+                added_dt = datetime.fromisoformat(player.added_at)
+                field_value = (
+                    f"{player.position} | {player.school}\n"
+                    f"Added {discord.utils.format_dt(added_dt, style='R')}"
+                )
+                current_embed.add_field(name=field_name, value=field_value, inline=False)
+                player_count += 1
 
         now_str = datetime.now(timezone.utc).strftime("%b %d, %Y %I:%M %p UTC")
         current_embed.set_footer(text=f"Last updated: {now_str}")
