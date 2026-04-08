@@ -11,6 +11,8 @@ class PlayerEntry:
     added_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     type: str = "target"  # Player type: "target" or "outgoing" (Phase 8)
     stats: dict | None = None  # Career stats data (Phase 9)
+    jersey_number: int = 0  # 0 means unknown/not applicable
+    class_year: str = ""  # "Fr.", "So.", "Jr.", "Sr.", "R-Fr.", "R-So.", "R-Jr.", "R-Sr." or empty
 
     def to_dict(self) -> dict:
         d = {
@@ -21,6 +23,8 @@ class PlayerEntry:
             "added_at": self.added_at,
             "type": self.type,
         }
+        d["jersey_number"] = self.jersey_number
+        d["class_year"] = self.class_year
         if self.stats is not None:
             d["stats"] = self.stats
         return d
