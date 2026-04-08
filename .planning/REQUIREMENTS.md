@@ -32,6 +32,15 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 - [x] **STATS-03**: Football stats formatted as passing, rushing, receiving yards and TDs per season
 - [x] **STATS-04**: Player name resolution uses fuzzy matching to handle name variations
 
+### Current Roster
+
+- [ ] **ROSTER-01**: Editors/admins can bulk-import current KU roster from CFBD (football) or CBBD (basketball) API
+- [ ] **ROSTER-02**: Each import replaces the existing roster for that sport (replace mode, not append)
+- [ ] **ROSTER-03**: Career stats auto-fetched for each imported player during import
+- [ ] **ROSTER-04**: /roster-list displays roster players alphabetically with name, position, jersey number, and class year
+- [ ] **ROSTER-05**: Roster players appear in /stats lookups and autocomplete alongside recruits and transfers
+- [ ] **ROSTER-06**: Roster data persists to JSON file and survives bot restarts
+
 ### Infrastructure
 
 - [ ] **INFRA-01**: CFBD API integration for football portal data and stats
@@ -82,6 +91,12 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 | STATS-02 | Phase 9 | Complete |
 | STATS-03 | Phase 9 | Complete |
 | STATS-04 | Phase 9 | Complete |
+| ROSTER-01 | Phase 10 | Pending |
+| ROSTER-02 | Phase 10 | Pending |
+| ROSTER-03 | Phase 10 | Pending |
+| ROSTER-04 | Phase 10 | Pending |
+| ROSTER-05 | Phase 10 | Pending |
+| ROSTER-06 | Phase 10 | Pending |
 | INFRA-01 | Phase 8 | Pending |
 | INFRA-02 | Phase 9 | Complete |
 | INFRA-03 | Phase 8 | Pending |
@@ -89,10 +104,10 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 | INFRA-05 | Phase 7 | Complete |
 
 **Coverage:**
-- v1.1 requirements: 21 total
-- Mapped to phases: 21
+- v1.1 requirements: 27 total
+- Mapped to phases: 27
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-07*
-*Last updated: 2026-04-07 after roadmap creation*
+*Last updated: 2026-04-08 after Phase 10 planning*

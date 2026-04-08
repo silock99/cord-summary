@@ -77,37 +77,19 @@ Plans:
 - [x] 09-01-PLAN.md — Stats infrastructure: SDK install, PlayerEntry extension, API fetch modules, monospace formatter
 - [x] 09-02-PLAN.md — Command wiring: stats-on-add hooks, /career command with autocomplete and fuzzy matching
 
-## Progress
-
-**Execution Order:**
-Phases execute in numeric order: 7 -> 8 -> 9
-
-| Phase | Milestone | Plans Complete | Status | Completed |
-|-------|-----------|----------------|--------|-----------|
-| 1. Foundation and Pipeline | v1.0 | 3/3 | Complete | 2026-03-28 |
-| 2. On-Demand Summarization | v1.0 | 2/2 | Complete | 2026-03-29 |
-| 3. Scheduling and Delivery | v1.0 | 2/2 | Complete | 2026-03-30 |
-| 4. Summary Quality Improvements | v1.0 | 2/2 | Complete | 2026-04-03 |
-| 5. Summary Language Controls | v1.0 | 1/1 | Complete | 2026-04-04 |
-| 6. Error Alerting | v1.0 | 2/2 | Complete | 2026-04-04 |
-| 7. Recruiting List and Foundation | v1.1 | 2/2 | Complete   | 2026-04-07 |
-| 8. Transfer Portal | v1.1 | 3/3 | Complete | 2026-04-07 |
-| 9. Career Stats | v1.1 | 2/2 | Complete | 2026-04-08 |
-| 10. Current Roster | v1.1 | 0/0 | Not started | - |
-| 11. Help Command | v1.1 | 0/0 | Not started | - |
-
 ### Phase 10: Current Roster
 **Goal**: Users can import and manage the current KU roster for both football and basketball, with career stats fetched automatically on add — same pattern as recruits and transfers
 **Depends on**: Phase 9
-**Requirements**: TBD
+**Requirements**: ROSTER-01, ROSTER-02, ROSTER-03, ROSTER-04, ROSTER-05, ROSTER-06
 **Success Criteria** (what must be TRUE):
   1. Users can add current roster players for football and basketball with stats auto-fetched on add
   2. Roster players appear in /stats lookups alongside recruits and transfers
   3. Roster data persists to JSON and survives bot restarts
-**Plans**: 0 plans
+**Plans**: 2 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 10 to break down)
+- [ ] 10-01-PLAN.md — PlayerEntry extension with jersey_number/class_year, roster fetch functions for CFBD and CBBD
+- [ ] 10-02-PLAN.md — Roster commands (import/list), client wiring, career command integration
 
 ### Phase 11: Help Command
 **Goal**: Users can run a help command to see all bot capabilities and how to use each command
@@ -120,3 +102,22 @@ Plans:
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 11 to break down)
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11
+
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 1. Foundation and Pipeline | v1.0 | 3/3 | Complete | 2026-03-28 |
+| 2. On-Demand Summarization | v1.0 | 2/2 | Complete | 2026-03-29 |
+| 3. Scheduling and Delivery | v1.0 | 2/2 | Complete | 2026-03-30 |
+| 4. Summary Quality Improvements | v1.0 | 2/2 | Complete | 2026-04-03 |
+| 5. Summary Language Controls | v1.0 | 1/1 | Complete | 2026-04-04 |
+| 6. Error Alerting | v1.0 | 2/2 | Complete | 2026-04-04 |
+| 7. Recruiting List and Foundation | v1.1 | 2/2 | Complete   | 2026-04-07 |
+| 8. Transfer Portal | v1.1 | 3/3 | Complete | 2026-04-07 |
+| 9. Career Stats | v1.1 | 2/2 | Complete | 2026-04-08 |
+| 10. Current Roster | v1.1 | 0/2 | Not started | - |
+| 11. Help Command | v1.1 | 0/0 | Not started | - |
