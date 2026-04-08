@@ -28,14 +28,14 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 ### Career Stats
 
 - [ ] **STATS-01**: User can look up college career stats for any player on the KU recruiting list
-- [ ] **STATS-02**: Basketball stats formatted as PPG, RPG, APG, FG%, 3P% per season
-- [ ] **STATS-03**: Football stats formatted as passing, rushing, receiving yards and TDs per season
+- [x] **STATS-02**: Basketball stats formatted as PPG, RPG, APG, FG%, 3P% per season
+- [x] **STATS-03**: Football stats formatted as passing, rushing, receiving yards and TDs per season
 - [ ] **STATS-04**: Player name resolution uses fuzzy matching to handle name variations
 
 ### Infrastructure
 
 - [ ] **INFRA-01**: CFBD API integration for football portal data and stats
-- [ ] **INFRA-02**: CBBD API integration for basketball stats
+- [x] **INFRA-02**: CBBD API integration for basketball stats
 - [ ] **INFRA-03**: MBB transfer portal uses admin-curated entries (no API available)
 - [x] **INFRA-04**: Channel-to-sport mapping configurable via environment variables
 - [x] **INFRA-05**: Authorized user IDs configurable for recruiting list management
@@ -79,11 +79,11 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 | RECRUIT-05 | Phase 7 | Complete |
 | RECRUIT-06 | Phase 7 | Complete |
 | STATS-01 | Phase 9 | Pending |
-| STATS-02 | Phase 9 | Pending |
-| STATS-03 | Phase 9 | Pending |
+| STATS-02 | Phase 9 | Complete |
+| STATS-03 | Phase 9 | Complete |
 | STATS-04 | Phase 9 | Pending |
 | INFRA-01 | Phase 8 | Pending |
-| INFRA-02 | Phase 9 | Pending |
+| INFRA-02 | Phase 9 | Complete |
 | INFRA-03 | Phase 8 | Pending |
 | INFRA-04 | Phase 7 | Complete |
 | INFRA-05 | Phase 7 | Complete |
