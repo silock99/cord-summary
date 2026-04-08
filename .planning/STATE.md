@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Athletics Intelligence
 status: executing
-stopped_at: Completed 08-02-PLAN.md
-last_updated: "2026-04-08T03:32:39.284Z"
-last_activity: 2026-04-08
+stopped_at: Completed 09-01-PLAN.md
+last_updated: "2026-04-08T06:22:07.736Z"
+last_activity: 2026-04-07
 progress:
   total_phases: 3
-  completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** Users can quickly catch up on what they missed without reading through hundreds of messages
-**Current focus:** Phase 08 — transfer-portal
+**Current focus:** Phase 07 — recruiting-list-and-foundation
 
 ## Current Position
 
-Phase: 9
+Phase: 8
 Plan: Not started
-Status: Executing Phase 08
-Last activity: 2026-04-08
+Status: Ready to execute
+Last activity: 2026-04-07
 
 Progress: [░░░░░░░░░░] 0% (v1.1: 0/3 phases)
 
@@ -48,7 +48,7 @@ Progress: [░░░░░░░░░░] 0% (v1.1: 0/3 phases)
 | 9. Career Stats | TBD | Not started |
 | Phase 07 P01 | 2m | 2 tasks | 6 files |
 | Phase 07 P02 | 2m | 2 tasks | 3 files |
-| Phase 08 P02 | 2m | 2 tasks | 1 files |
+| Phase 09 P01 | 4m | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -64,7 +64,9 @@ Progress: [░░░░░░░░░░] 0% (v1.1: 0/3 phases)
 - [Phase 07]: PlayerEntry.added_at stored as ISO string for JSON serialization
 - [Phase 07]: Transfer commands use identical structure to recruit commands with separate store instance
 - [Phase 07]: recruit-list/transfer-list are public commands, add/remove require editor or admin
-- [Phase 08]: Transfer type defaults to target when omitted; 10 players per embed page
+- [Phase 09]: Used cfbd v4 SDK (v5 not on PyPI) with api_key dict auth pattern
+- [Phase 09]: Replaced cbbd SDK with aiohttp REST calls due to pydantic v1/v2 conflict
+- [Phase 09]: PlayerEntry.from_dict uses __dataclass_fields__ filtering for compat
 
 ### Pending Todos
 
@@ -78,6 +80,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T00:50:12.879Z
-Stopped at: Completed 08-02-PLAN.md
+Last session: 2026-04-08T06:22:07.733Z
+Stopped at: Completed 09-01-PLAN.md
 Resume file: None
