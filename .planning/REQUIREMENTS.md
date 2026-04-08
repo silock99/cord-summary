@@ -27,10 +27,10 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 
 ### Career Stats
 
-- [ ] **STATS-01**: User can look up college career stats for any player on the KU recruiting list
+- [x] **STATS-01**: User can look up college career stats for any player on the KU recruiting list
 - [x] **STATS-02**: Basketball stats formatted as PPG, RPG, APG, FG%, 3P% per season
 - [x] **STATS-03**: Football stats formatted as passing, rushing, receiving yards and TDs per season
-- [ ] **STATS-04**: Player name resolution uses fuzzy matching to handle name variations
+- [x] **STATS-04**: Player name resolution uses fuzzy matching to handle name variations
 
 ### Infrastructure
 
@@ -78,10 +78,10 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 | RECRUIT-04 | Phase 7 | Complete |
 | RECRUIT-05 | Phase 7 | Complete |
 | RECRUIT-06 | Phase 7 | Complete |
-| STATS-01 | Phase 9 | Pending |
+| STATS-01 | Phase 9 | Complete |
 | STATS-02 | Phase 9 | Complete |
 | STATS-03 | Phase 9 | Complete |
-| STATS-04 | Phase 9 | Pending |
+| STATS-04 | Phase 9 | Complete |
 | INFRA-01 | Phase 8 | Pending |
 | INFRA-02 | Phase 9 | Complete |
 | INFRA-03 | Phase 8 | Pending |

@@ -72,8 +72,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — Stats infrastructure: SDK install, PlayerEntry extension, API fetch modules, monospace formatter
-- [ ] 09-02-PLAN.md — Command wiring: stats-on-add hooks, /career command with autocomplete and fuzzy matching
+- [x] 09-01-PLAN.md — Stats infrastructure: SDK install, PlayerEntry extension, API fetch modules, monospace formatter
+- [x] 09-02-PLAN.md — Command wiring: stats-on-add hooks, /career command with autocomplete and fuzzy matching
 
 ## Progress
 

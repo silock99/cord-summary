@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Athletics Intelligence
 status: executing
-stopped_at: Completed 09-01-PLAN.md
-last_updated: "2026-04-08T06:22:07.736Z"
-last_activity: 2026-04-07
+stopped_at: Completed 09-02-PLAN.md
+last_updated: "2026-04-08T06:26:32Z"
+last_activity: 2026-04-08
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 2
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -49,6 +49,7 @@ Progress: [░░░░░░░░░░] 0% (v1.1: 0/3 phases)
 | Phase 07 P01 | 2m | 2 tasks | 6 files |
 | Phase 07 P02 | 2m | 2 tasks | 3 files |
 | Phase 09 P01 | 4m | 2 tasks | 8 files |
+| Phase 09 P02 | 2m | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -67,6 +68,9 @@ Progress: [░░░░░░░░░░] 0% (v1.1: 0/3 phases)
 - [Phase 09]: Used cfbd v4 SDK (v5 not on PyPI) with api_key dict auth pattern
 - [Phase 09]: Replaced cbbd SDK with aiohttp REST calls due to pydantic v1/v2 conflict
 - [Phase 09]: PlayerEntry.from_dict uses __dataclass_fields__ filtering for compat
+- [Phase 09]: Stats fetch on add is fire-and-forget -- failure never blocks player addition
+- [Phase 09]: Career command searches both stores before falling back to live API
+- [Phase 09]: Autocomplete deduplicates players across recruit and transfer stores
 
 ### Pending Todos
 
@@ -80,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T06:22:07.733Z
-Stopped at: Completed 09-01-PLAN.md
+Last session: 2026-04-08T06:26:32Z
+Stopped at: Completed 09-02-PLAN.md
 Resume file: None
