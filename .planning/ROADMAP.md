@@ -25,7 +25,7 @@
 - [x] **Phase 8: Transfer Portal** - Portal lookup for football (CFBD API) and basketball (admin-curated), with caching, pagination, and position filtering (completed 2026-04-07)
 - [x] **Phase 9: Career Stats** - College career stats for recruiting list players with fuzzy name matching and sport-specific formatting (completed 2026-04-08)
 - [x] **Phase 10: Current Roster** - Import and manage the current KU roster for both football and basketball, with stats fetching on add (completed 2026-04-08)
-- [x] **Phase 11: Help Command** - Display all bot capabilities and command usage so users know their options (completed 2026-04-08)
+- [x] **Phase 11: Help Command** - Display all bot capabilities and command usage so users know their options (completed 2026-04-08)
 
 ## Phase Details
 
@@ -103,10 +103,26 @@ Plans:
 Plans:
 - [x] 11-01-PLAN.md — /cordbot command with static registry, permission filtering, and categorized embed
 
+### Phase 12: Refine the summary the bot produces
+**Goal**: Summaries are headline-depth, username-free, topic-grouped with an Announcements section, volume-aware detail, and footer stats showing message/participant counts
+**Depends on**: Phase 11
+**Requirements**: D-01, D-02, D-03, D-04, D-05, D-06, D-07, D-08, D-09, D-10, D-11, D-12, D-13
+**Success Criteria** (what must be TRUE):
+  1. Summaries show headline-depth bullets (topic + 1-line takeaway) with no usernames
+  2. [IMPORTANT] messages appear in a dedicated Announcements section at the top
+  3. Summary detail adapts to message volume (low/medium/high)
+  4. Embed footer shows message count and participant count
+  5. Links appear inline within topic bullets, no separate section
+**Plans**: 2 plans
+
+Plans:
+- [ ] 12-01-PLAN.md — Rewrite system prompts, add SummaryResult dataclass, volume-aware preamble
+- [ ] 12-02-PLAN.md — Embed footer stats and caller site updates
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11
+Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -121,3 +137,4 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11
 | 9. Career Stats | v1.1 | 2/2 | Complete | 2026-04-08 |
 | 10. Current Roster | v1.1 | 2/2 | Complete    | 2026-04-08 |
 | 11. Help Command | v1.1 | 1/1 | Complete    | 2026-04-08 |
+| 12. Refine Summary | v1.1 | 0/2 | Planned | - |
