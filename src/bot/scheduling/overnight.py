@@ -105,15 +105,16 @@ class OvernightScheduler:
                     before,
                     self.bot.settings.max_context_tokens,
                 )
-                summary_text = summary_result.text
-
-                if summary_text == "No messages to summarize.":
+                if summary_result.text == "No messages to summarize.":
                     logger.info(f"#{channel.name}: no messages in {label} window, skipping")
                     continue
 
-                embeds = build_summary_embeds(summary_text, channel.name, label)
+                embeds = build_summary_embeds(
+                    summary_result.text, channel.name, f"Scheduled {label}",
+                    message_count=summary_result.message_count,
+                    participant_count=summary_result.participant_count,
+                )
                 for embed in embeds:
-                    embed.set_footer(text=f"Scheduled {label} summary")
                     await target.send(embed=embed)
 
             except SummaryError as e:

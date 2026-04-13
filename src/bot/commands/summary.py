@@ -131,15 +131,21 @@ def register_summary_command(bot) -> None:
 
         # Step 7 - Summarize via provider
         try:
+            message_count = len(processed)
+            participant_count = len({msg.author for msg in processed})
             summary_text = await summarize_messages(
-                bot.provider, processed, bot.settings.max_context_tokens
+                bot.provider, processed, bot.settings.max_context_tokens,
+                total_message_count=message_count,
             )
         except SummaryError as e:
             await interaction.edit_original_response(content=f"Summary failed: {e}")
             return
 
         # Step 8 - Build embeds and send (per D-06)
-        embeds = build_summary_embeds(summary_text, target.name, timerange_label)
+        embeds = build_summary_embeds(
+            summary_text, target.name, timerange_label,
+            message_count=message_count, participant_count=participant_count,
+        )
         await interaction.edit_original_response(embed=embeds[0])
         for extra in embeds[1:]:
             await interaction.followup.send(embed=extra, ephemeral=True)
