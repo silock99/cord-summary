@@ -79,13 +79,14 @@ def register_post_summary_command(bot) -> None:
 
         # Summarize
         try:
-            summary_text = await summarize_channel(
+            summary_result = await summarize_channel(
                 target,
                 interaction.guild,
                 bot.provider,
                 after,
                 max_context_tokens=bot.settings.max_context_tokens,
             )
+            summary_text = summary_result.text
         except SummaryError as e:
             await interaction.edit_original_response(content=f"Summary failed: {e}")
             return

@@ -2,6 +2,7 @@
 
 import logging
 from collections import Counter
+from dataclasses import dataclass
 from datetime import datetime
 
 import discord
@@ -19,34 +20,56 @@ from bot.pipeline.chunker import (
 
 logger = logging.getLogger(__name__)
 
+
+@dataclass
+class SummaryResult:
+    """Result of a channel summarization including metadata for embed footer."""
+    text: str
+    message_count: int
+    participant_count: int
+
+
 SUMMARY_SYSTEM_PROMPT = (
     "You are a Discord channel summarizer. Given a conversation log, produce a concise "
-    "summary organized by discussion topic. Format each topic with a bold header "
-    "(**Topic Name**) followed by bullet points underneath.\n\n"
-    "Signal markers in the input:\n"
-    "- [IMPORTANT]: Messages with @here or @everyone mentions. You MUST include "
-    "these verbatim in the summary -- do not paraphrase or omit them.\n"
-    "- [POPULAR]: Messages with high engagement (many reactions or replies). "
-    "Prioritize these in the summary.\n"
-    "- [N reactions]: Shows total reaction count, indicating community engagement.\n"
-    "- Indented lines starting with > are replies to the message above them, "
-    "showing conversation flow.\n"
-    "- [image: file], [video: file], [file: file]: Attachment metadata -- mention "
-    "what was shared.\n"
-    "- Embed content appears in parentheses after the message text.\n\n"
-    "Keep language clear and brief. Do not include timestamps. "
-    "Do not extract action items or decisions as separate sections."
+    "summary organized by discussion topic.\n\n"
+    "## Output Rules\n"
+    "- Focus on WHAT was discussed, not WHO said it. Never include usernames, "
+    "display names, or @mentions in the summary.\n"
+    "- Each topic: bold header (**Topic Name**) followed by bullet points.\n"
+    "- Each bullet: topic name + one-line takeaway. Headline depth only -- no paragraphs.\n"
+    "- If any messages are marked [IMPORTANT], create an **Announcements** section at the "
+    "very top (before all topic sections). List each announcement as a bullet with the "
+    "verbatim message text.\n"
+    "- Order remaining topics by engagement: topics with [POPULAR] markers appear first. "
+    "Do not add any special formatting to popular topics -- just list them earlier.\n"
+    "- Drop minor topics that had only 1-2 messages with no reactions or replies.\n"
+    "- When messages contain URLs, include them inline in the relevant bullet. "
+    "Never collect links into a separate section.\n"
+    "- Do NOT include a TL;DR, key takeaways, or executive summary section.\n"
+    "- Do NOT note whether discussions are resolved or ongoing.\n"
+    "- Tone: clear, neutral English. No slang, no corporate jargon.\n\n"
+    "## Input Signal Reference\n"
+    "- [IMPORTANT]: @here/@everyone message -- MUST appear in Announcements section.\n"
+    "- [POPULAR]: High-engagement message -- prioritize its topic.\n"
+    "- [N reactions]: Community engagement level.\n"
+    "- Indented > lines: Replies showing conversation flow.\n"
+    "- [image/video/file: name]: Shared media -- mention briefly.\n"
+    "- Parenthetical text: Embed content from links.\n"
 )
 
 MERGE_SYSTEM_PROMPT = (
     "You are a Discord channel summarizer. Given multiple time-period summaries from "
-    "the same channel, produce one unified summary organized by discussion topic. "
-    "Format each topic with a bold header (**Topic Name**) followed by bullet points "
-    "underneath. Merge related topics and remove redundancy.\n\n"
-    "Preserve any verbatim @here/@everyone messages from the input summaries -- "
-    "these are marked as important and must not be dropped.\n"
-    "Prioritize topics that were marked as popular or had high engagement.\n\n"
-    "Do not extract action items or decisions as separate sections."
+    "the same channel, produce one unified summary organized by discussion topic.\n\n"
+    "## Output Rules\n"
+    "- If any input summaries contain an **Announcements** section, consolidate all "
+    "announcements into a single **Announcements** section at the top.\n"
+    "- Each topic: bold header (**Topic Name**) followed by headline-depth bullets.\n"
+    "- Merge related topics and remove redundancy.\n"
+    "- Order topics by engagement level (most-discussed first).\n"
+    "- Never include usernames or @mentions.\n"
+    "- Preserve all URLs inline within their topic bullets.\n"
+    "- Do NOT include TL;DR, key takeaways, or resolution status.\n"
+    "- Tone: clear, neutral English. No slang, no corporate jargon.\n"
 )
 
 
@@ -99,7 +122,7 @@ async def summarize_channel(
     after: datetime,
     before: datetime | None = None,
     max_context_tokens: int = 120_000,
-) -> str:
+) -> SummaryResult:
     """Full pipeline: fetch -> preprocess -> summarize."""
     raw_messages = await fetch_messages(channel, after, before)
 
@@ -122,4 +145,12 @@ async def summarize_channel(
         if msg.reply_count >= 5 or msg.reaction_count >= 5:
             msg.is_popular = True
 
-    return await summarize_messages(provider, processed, max_context_tokens)
+    participant_count = len({msg.author for msg in processed})
+    message_count = len(processed)
+
+    summary_text = await summarize_messages(provider, processed, max_context_tokens)
+    return SummaryResult(
+        text=summary_text,
+        message_count=message_count,
+        participant_count=participant_count,
+    )

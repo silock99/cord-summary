@@ -97,7 +97,7 @@ class OvernightScheduler:
                 continue
 
             try:
-                summary_text = await summarize_channel(
+                summary_result = await summarize_channel(
                     channel,
                     guild,
                     self.bot.provider,
@@ -105,6 +105,7 @@ class OvernightScheduler:
                     before,
                     self.bot.settings.max_context_tokens,
                 )
+                summary_text = summary_result.text
 
                 if summary_text == "No messages to summarize.":
                     logger.info(f"#{channel.name}: no messages in {label} window, skipping")
