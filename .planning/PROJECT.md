@@ -34,6 +34,7 @@ Users can quickly catch up on what they missed without reading through hundreds 
 
 ### Active
 
+- ✓ Summary quality: headline-depth, username-free, topic-grouped with Announcements section, volume-aware detail, and footer stats — Validated in Phase 12: Refine Summary
 - [ ] Transfer portal lookup command filtered by sport and school (transfer management commands with cache infrastructure complete — Validated in Phase 8: Transfer Portal)
 - ✓ Current roster import and display with jersey numbers, positions, and class years — Validated in Phase 10: Current Roster
 - ✓ Roster players integrated into /stats lookups — Validated in Phase 10: Current Roster
