@@ -1,4 +1,4 @@
-"""Tests for the summarizer orchestrator (plan 01-03, Task 2)."""
+"""Tests for the summarizer orchestrator."""
 
 import pytest
 from datetime import datetime, timedelta
@@ -61,9 +61,9 @@ async def test_summarize_small_set():
 
     assert result == "Summary of 5 messages"
     assert len(provider.calls) == 1
-    # The single call should use the summary system prompt
+    # The single call should use the summary system prompt (with language guidelines appended)
     _, prompt = provider.calls[0]
-    assert prompt == SUMMARY_SYSTEM_PROMPT
+    assert SUMMARY_SYSTEM_PROMPT in prompt
 
 
 @pytest.mark.asyncio
@@ -89,9 +89,9 @@ async def test_summarize_large_set_two_pass():
     assert result == "Final merged summary"
     # Should have 3 calls: 2 chunk summaries + 1 merge
     assert len(provider.calls) == 3
-    # Last call should use merge prompt
+    # Last call should use merge prompt (with language guidelines appended)
     _, last_prompt = provider.calls[-1]
-    assert last_prompt == MERGE_SYSTEM_PROMPT
+    assert MERGE_SYSTEM_PROMPT in last_prompt
 
 
 @pytest.mark.asyncio
@@ -144,8 +144,96 @@ async def test_preprocess_filters_applied():
             mock_channel, mock_guild, provider, after, max_context_tokens=120_000
         )
 
-    assert result == "Channel summary"
+    assert result.text == "Channel summary"
+    assert result.message_count == 2
+    assert result.participant_count == 2
     assert mock_fetch.called
     assert mock_preprocess.call_count == 3
     # Provider should have been called with 2 messages (one filtered out)
     assert len(provider.calls) == 1
+
+
+class TestPromptContent:
+    """Verify SUMMARY_SYSTEM_PROMPT and MERGE_SYSTEM_PROMPT contain required instructions."""
+
+    def test_no_usernames(self):
+        from bot.summarizer import SUMMARY_SYSTEM_PROMPT
+        assert "Never include usernames, display names, or @mentions" in SUMMARY_SYSTEM_PROMPT
+
+    def test_announcements_section(self):
+        from bot.summarizer import SUMMARY_SYSTEM_PROMPT
+        assert "Announcements" in SUMMARY_SYSTEM_PROMPT
+
+    def test_headline_depth(self):
+        from bot.summarizer import SUMMARY_SYSTEM_PROMPT
+        assert "Headline depth" in SUMMARY_SYSTEM_PROMPT
+
+    def test_inline_urls(self):
+        from bot.summarizer import SUMMARY_SYSTEM_PROMPT
+        assert "include them inline in the relevant bullet" in SUMMARY_SYSTEM_PROMPT
+
+    def test_no_action_items_old_remnant(self):
+        from bot.summarizer import SUMMARY_SYSTEM_PROMPT
+        assert "action items or decisions as separate" not in SUMMARY_SYSTEM_PROMPT
+
+    def test_drop_minor_topics(self):
+        from bot.summarizer import SUMMARY_SYSTEM_PROMPT
+        assert "Drop minor topics" in SUMMARY_SYSTEM_PROMPT
+
+    def test_no_tldr(self):
+        from bot.summarizer import SUMMARY_SYSTEM_PROMPT
+        assert "Do NOT include a TL;DR" in SUMMARY_SYSTEM_PROMPT
+
+    def test_no_resolution_status(self):
+        from bot.summarizer import SUMMARY_SYSTEM_PROMPT
+        assert "Do NOT note whether discussions are resolved" in SUMMARY_SYSTEM_PROMPT
+
+    def test_merge_consolidate_announcements(self):
+        from bot.summarizer import MERGE_SYSTEM_PROMPT
+        assert "consolidate all announcements" in MERGE_SYSTEM_PROMPT
+
+    def test_merge_no_usernames(self):
+        from bot.summarizer import MERGE_SYSTEM_PROMPT
+        assert "Never include usernames" in MERGE_SYSTEM_PROMPT
+
+
+class TestSummaryResult:
+    """Verify SummaryResult dataclass and summarize_channel metadata."""
+
+    def test_summary_result_fields(self):
+        from bot.summarizer import SummaryResult
+        result = SummaryResult(text="test", message_count=10, participant_count=3)
+        assert result.text == "test"
+        assert result.message_count == 10
+        assert result.participant_count == 3
+
+    @pytest.mark.asyncio
+    async def test_summary_result_metadata(self):
+        """summarize_channel returns SummaryResult with correct counts."""
+        from bot.summarizer import summarize_channel
+
+        mock_channel = MagicMock()
+        mock_guild = MagicMock()
+        provider = MockProvider(responses=["Summary text"])
+
+        # 3 messages from 2 unique authors
+        processed_msgs = [
+            ProcessedMessage(author="alice", content="Hello", timestamp=datetime(2026, 3, 27, 10, 0)),
+            ProcessedMessage(author="bob", content="Hi", timestamp=datetime(2026, 3, 27, 10, 1)),
+            ProcessedMessage(author="alice", content="How are you", timestamp=datetime(2026, 3, 27, 10, 2)),
+        ]
+
+        after = datetime(2026, 3, 27, 9, 0)
+
+        with patch("bot.summarizer.fetch_messages", new_callable=AsyncMock) as mock_fetch, \
+             patch("bot.summarizer.preprocess_message") as mock_preprocess:
+            mock_fetch.return_value = [MagicMock(), MagicMock(), MagicMock()]
+            mock_preprocess.side_effect = processed_msgs
+
+            result = await summarize_channel(
+                mock_channel, mock_guild, provider, after, max_context_tokens=120_000
+            )
+
+        assert result.text == "Summary text"
+        assert result.message_count == 3
+        assert result.participant_count == 2
