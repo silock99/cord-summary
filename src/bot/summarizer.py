@@ -40,14 +40,19 @@ SUMMARY_SYSTEM_PROMPT = (
     "their full name in the relevant bullet -- never paraphrase as \"a player,\" "
     "\"a recruit,\" or \"a coach.\" Be as specific as possible: include position, "
     "school, class year, or star rating when mentioned.\n"
+    "- HARD CAPS: At most 5 topics total. At most 2 bullets per topic. At most "
+    "15 words per bullet. Fewer is better.\n"
     "- Each topic: bold header (**Topic Name**) followed by bullet points.\n"
-    "- Each bullet: topic name + one-line takeaway. Headline depth only -- no paragraphs.\n"
+    "- Each bullet: topic name + one-line takeaway. Headline depth only -- no paragraphs. "
+    "Prefer terse sentence fragments over full sentences.\n"
     "- If any messages are marked [IMPORTANT], create an **Announcements** section at the "
     "very top (before all topic sections). List each announcement as a bullet with the "
     "verbatim message text.\n"
     "- Order remaining topics by engagement: topics with [POPULAR] markers appear first. "
     "Do not add any special formatting to popular topics -- just list them earlier.\n"
-    "- Drop minor topics that had only 1-2 messages with no reactions or replies.\n"
+    "- Drop minor topics that had only 1-2 messages with no reactions or replies. "
+    "Be aggressive -- when in doubt, drop it. Prefer a short summary with 2 strong "
+    "topics over a long summary with 6 marginal ones.\n"
     "- STRICT TOPIC FILTER: Only include topics directly related to college basketball "
     "or college football (recruiting, transfer portal, games, stats, coaching, roster "
     "moves, NIL, conference news). Reject and omit ALL other topics -- including "
@@ -83,8 +88,11 @@ MERGE_SYSTEM_PROMPT = (
     "## Output Rules\n"
     "- If any input summaries contain an **Announcements** section, consolidate all "
     "announcements into a single **Announcements** section at the top.\n"
-    "- Each topic: bold header (**Topic Name**) followed by headline-depth bullets.\n"
-    "- Merge related topics and remove redundancy.\n"
+    "- HARD CAPS: At most 5 topics total. At most 2 bullets per topic. At most "
+    "15 words per bullet. Fewer is better.\n"
+    "- Each topic: bold header (**Topic Name**) followed by headline-depth bullets. "
+    "Prefer terse sentence fragments over full sentences.\n"
+    "- Merge related topics aggressively and remove all redundancy. When in doubt, drop.\n"
     "- STRICT TOPIC FILTER: Only keep topics directly related to college basketball "
     "or college football. Drop all other topics -- including other sports, pop "
     "culture, news, memes, politics, video games, technology, or personal discussion.\n"
@@ -113,17 +121,17 @@ def _volume_context(message_count: int) -> str:
     if message_count <= 30:
         return (
             f"[Volume: {message_count} messages -- LOW. "
-            "Include more detail per topic. Up to 2 sentences per bullet is acceptable.]\n\n"
+            "Keep it short: max 3 topics, 1 bullet each, single terse sentence per bullet.]\n\n"
         )
     elif message_count <= 150:
         return (
             f"[Volume: {message_count} messages -- MEDIUM. "
-            "Standard headline-depth: 1 sentence per bullet.]\n\n"
+            "Max 4 topics. Use sentence fragments, not full sentences.]\n\n"
         )
     else:
         return (
             f"[Volume: {message_count} messages -- HIGH. "
-            "Show only the most significant topics. Keep bullets to sentence fragments.]\n\n"
+            "Max 3 topics -- only the biggest news. Terse fragments only.]\n\n"
         )
 
 
