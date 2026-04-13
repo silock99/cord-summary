@@ -237,3 +237,86 @@ class TestSummaryResult:
         assert result.text == "Summary text"
         assert result.message_count == 3
         assert result.participant_count == 2
+
+
+class TestVolumeContext:
+    """Verify _volume_context() thresholds and output (D-12)."""
+
+    def test_low_10(self):
+        from bot.summarizer import _volume_context
+        result = _volume_context(10)
+        assert "LOW" in result
+        assert "10" in result
+
+    def test_low_30(self):
+        from bot.summarizer import _volume_context
+        result = _volume_context(30)
+        assert "LOW" in result
+        assert "30" in result
+
+    def test_medium_31(self):
+        from bot.summarizer import _volume_context
+        result = _volume_context(31)
+        assert "MEDIUM" in result
+        assert "31" in result
+
+    def test_medium_100(self):
+        from bot.summarizer import _volume_context
+        result = _volume_context(100)
+        assert "MEDIUM" in result
+
+    def test_medium_150(self):
+        from bot.summarizer import _volume_context
+        result = _volume_context(150)
+        assert "MEDIUM" in result
+        assert "150" in result
+
+    def test_high_151(self):
+        from bot.summarizer import _volume_context
+        result = _volume_context(151)
+        assert "HIGH" in result
+        assert "151" in result
+
+    def test_high_500(self):
+        from bot.summarizer import _volume_context
+        result = _volume_context(500)
+        assert "HIGH" in result
+
+    def test_always_includes_count(self):
+        from bot.summarizer import _volume_context
+        for count in [1, 30, 31, 150, 151, 999]:
+            result = _volume_context(count)
+            assert str(count) in result
+
+    @pytest.mark.asyncio
+    async def test_single_pass_prepends_volume_preamble(self):
+        """In single-pass summarization, user message text starts with volume preamble."""
+        from bot.summarizer import summarize_messages
+
+        messages = _make_messages(5)
+        provider = MockProvider(responses=["Summary"])
+
+        await summarize_messages(provider, messages, max_context_tokens=120_000)
+
+        text, _ = provider.calls[0]
+        assert text.startswith("[Volume:")
+
+    @pytest.mark.asyncio
+    async def test_two_pass_uses_total_count_preamble(self):
+        """In two-pass summarization, each chunk gets total message count preamble."""
+        from bot.summarizer import summarize_messages
+
+        # Create messages in two time windows
+        messages = _make_messages(10, start=datetime(2026, 3, 27, 8, 0, 0))
+        messages += _make_messages(10, start=datetime(2026, 3, 27, 10, 0, 0))
+
+        provider = MockProvider(
+            responses=["Chunk 1", "Chunk 2", "Merged"]
+        )
+
+        await summarize_messages(provider, messages, max_context_tokens=1)
+
+        # Each chunk call should have total count (20) in volume preamble
+        for i in range(2):
+            text, _ = provider.calls[i]
+            assert text.startswith("[Volume: 20 messages")
