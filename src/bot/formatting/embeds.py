@@ -12,6 +12,8 @@ def build_summary_embeds(
     summary_text: str,
     channel_name: str,
     timerange_label: str,
+    message_count: int = 0,
+    participant_count: int = 0,
 ) -> list[discord.Embed]:
     """Build Discord embeds from summary text, splitting at topic boundaries.
 
@@ -19,7 +21,7 @@ def build_summary_embeds(
     Each embed stays under EMBED_DESC_LIMIT (4096) characters.
     """
     if not summary_text or not summary_text.strip():
-        return [_make_embed("No summary content generated.", channel_name, timerange_label, 0)]
+        return [_make_embed("No summary content generated.", channel_name, timerange_label, 0, message_count, participant_count)]
 
     sections = _split_into_topics(summary_text)
 
@@ -29,7 +31,7 @@ def build_summary_embeds(
     for section in sections:
         # If adding this section would exceed the limit, finalize current embed
         if current_text and len(current_text) + len(section) + 2 > EMBED_DESC_LIMIT:
-            embeds.append(_make_embed(current_text, channel_name, timerange_label, len(embeds)))
+            embeds.append(_make_embed(current_text, channel_name, timerange_label, len(embeds), message_count, participant_count))
             current_text = ""
 
         # If a single section exceeds the limit, truncate it
@@ -40,7 +42,7 @@ def build_summary_embeds(
 
     # Finalize the last chunk
     if current_text:
-        embeds.append(_make_embed(current_text, channel_name, timerange_label, len(embeds)))
+        embeds.append(_make_embed(current_text, channel_name, timerange_label, len(embeds), message_count, participant_count))
 
     return embeds
 
@@ -56,6 +58,8 @@ def _make_embed(
     channel_name: str,
     timerange_label: str,
     index: int,
+    message_count: int = 0,
+    participant_count: int = 0,
 ) -> discord.Embed:
     """Create a single Discord embed for a summary chunk."""
     embed = discord.Embed(
@@ -66,5 +70,10 @@ def _make_embed(
         embed.title = f"Summary: #{channel_name}"
     else:
         embed.title = f"Summary: #{channel_name} (continued)"
-    embed.set_footer(text=f"Period: {timerange_label}")
+    if message_count > 0 and participant_count > 0:
+        embed.set_footer(
+            text=f"{message_count} messages from {participant_count} participants | {timerange_label}"
+        )
+    else:
+        embed.set_footer(text=f"Period: {timerange_label}")
     return embed
