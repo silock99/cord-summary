@@ -116,8 +116,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 12-01-PLAN.md — Rewrite system prompts, add SummaryResult dataclass, volume-aware preamble
-- [ ] 12-02-PLAN.md — Embed footer stats and caller site updates
+- [x] 12-01-PLAN.md — Rewrite system prompts, add SummaryResult dataclass, volume-aware preamble
+- [x] 12-02-PLAN.md — Embed footer stats and caller site updates
 
 ## Progress
 
@@ -137,4 +137,4 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12
 | 9. Career Stats | v1.1 | 2/2 | Complete | 2026-04-08 |
 | 10. Current Roster | v1.1 | 2/2 | Complete    | 2026-04-08 |
 | 11. Help Command | v1.1 | 1/1 | Complete    | 2026-04-08 |
-| 12. Refine Summary | v1.1 | 0/2 | Planned | - |
+| 12. Refine Summary | v1.1 | 2/2 | Complete    | 2026-04-13 |
