@@ -106,3 +106,37 @@ class TestTopicSplittingRegex:
         sections = _split_into_topics(text)
         assert len(sections) == 1
         assert sections[0] == text
+
+
+class TestFooterStats:
+    def test_footer_with_stats(self):
+        embeds = build_summary_embeds(
+            "Some summary text", "general", "Last 4 hours",
+            message_count=147, participant_count=23,
+        )
+        assert embeds[0].footer.text == "147 messages from 23 participants | Last 4 hours"
+
+    def test_footer_without_stats_backward_compat(self):
+        embeds = build_summary_embeds("Some summary text", "general", "Last 4 hours")
+        assert embeds[0].footer.text == "Period: Last 4 hours"
+
+    def test_footer_stats_on_continued_embeds(self):
+        """All embeds in a multi-embed split should have stats footer."""
+        topic1 = "**Server Infrastructure**\n" + "- " + "x" * 1800 + "\n"
+        topic2 = "**Development Updates**\n" + "- " + "y" * 1800 + "\n"
+        topic3 = "**Community Events**\n" + "- " + "z" * 1800 + "\n"
+        text = topic1 + "\n" + topic2 + "\n" + topic3
+        embeds = build_summary_embeds(
+            text, "general", "Last 4 hours",
+            message_count=200, participant_count=30,
+        )
+        assert len(embeds) >= 2
+        for embed in embeds:
+            assert "200 messages from 30 participants" in embed.footer.text
+
+    def test_footer_stats_on_empty_summary(self):
+        embeds = build_summary_embeds(
+            "", "general", "Last 4 hours",
+            message_count=10, participant_count=3,
+        )
+        assert "10 messages from 3 participants" in embeds[0].footer.text
