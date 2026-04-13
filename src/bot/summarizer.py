@@ -73,10 +73,34 @@ MERGE_SYSTEM_PROMPT = (
 )
 
 
+def _volume_context(message_count: int) -> str:
+    """Generate volume-awareness preamble for the LLM (per D-12).
+
+    Prepended to user message text to calibrate summary detail level.
+    Thresholds: <=30 LOW, 31-150 MEDIUM, >150 HIGH.
+    """
+    if message_count <= 30:
+        return (
+            f"[Volume: {message_count} messages -- LOW. "
+            "Include more detail per topic. Up to 2 sentences per bullet is acceptable.]\n\n"
+        )
+    elif message_count <= 150:
+        return (
+            f"[Volume: {message_count} messages -- MEDIUM. "
+            "Standard headline-depth: 1 sentence per bullet.]\n\n"
+        )
+    else:
+        return (
+            f"[Volume: {message_count} messages -- HIGH. "
+            "Show only the most significant topics. Keep bullets to sentence fragments.]\n\n"
+        )
+
+
 async def summarize_messages(
     provider: SummaryProvider,
     messages: list[ProcessedMessage],
     max_context_tokens: int = 120_000,
+    total_message_count: int | None = None,
 ) -> str:
     """Orchestrate summarization with optional two-pass chunking (per D-09).
 
@@ -91,9 +115,11 @@ async def summarize_messages(
     summary_prompt = SUMMARY_SYSTEM_PROMPT + guidelines
     merge_prompt = MERGE_SYSTEM_PROMPT + guidelines
 
+    count = total_message_count if total_message_count is not None else len(messages)
+
     if not needs_chunking(messages, max_context_tokens):
         # Single-pass: all messages fit
-        text = format_chunk_for_llm(messages)
+        text = _volume_context(count) + format_chunk_for_llm(messages)
         logger.info(f"Single-pass summarization: {len(messages)} messages")
         return await provider.summarize(text, summary_prompt)
 
@@ -103,7 +129,7 @@ async def summarize_messages(
 
     chunk_summaries: list[str] = []
     for i, chunk in enumerate(chunks):
-        text = format_chunk_for_llm(chunk)
+        text = _volume_context(count) + format_chunk_for_llm(chunk)
         summary = await provider.summarize(text, summary_prompt)
         chunk_summaries.append(summary)
         logger.info(f"Chunk {i+1}/{len(chunks)} summarized")
@@ -148,7 +174,7 @@ async def summarize_channel(
     participant_count = len({msg.author for msg in processed})
     message_count = len(processed)
 
-    summary_text = await summarize_messages(provider, processed, max_context_tokens)
+    summary_text = await summarize_messages(provider, processed, max_context_tokens, total_message_count=message_count)
     return SummaryResult(
         text=summary_text,
         message_count=message_count,
