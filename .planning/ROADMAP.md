@@ -138,6 +138,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13
 | 10. Current Roster | v1.1 | 2/2 | Complete    | 2026-04-08 |
 | 11. Help Command | v1.1 | 1/1 | Complete    | 2026-04-08 |
 | 12. Refine Summary | v1.1 | 2/2 | Complete    | 2026-04-13 |
+| 13. Google Sheet → Basketball Transfer Targets | v1.1 | 2/2 | Complete | 2026-04-14 |
 
 ### Phase 13: Connect a Google Sheet to the recruit list function
 
@@ -147,5 +148,5 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13
 **Plans:** 2 plans
 
 Plans:
-- [ ] 13-01-PLAN.md — Data path: gspread dep, Settings, TransferTarget model, SheetTransferTargetStore with atomic snapshot, SheetSyncScheduler, client.py wiring (snapshot load, self-heal, initial fetch, hourly loop)
-- [ ] 13-02-PLAN.md — Command layer: guard /transfer-add and /transfer-remove for basketball+target, rewrite /transfer-list basketball render to use TransferTarget fields with "Synced N ago" footer
+- [x] 13-01-PLAN.md — Data path: gspread dep, Settings, TransferTarget model, SheetTransferTargetStore with atomic snapshot, SheetSyncScheduler, client.py wiring (snapshot load, self-heal, initial fetch, hourly loop)
+- [x] 13-02-PLAN.md — Command layer: guard /transfer-add and /transfer-remove for basketball+target, rewrite /transfer-list basketball render to use TransferTarget fields with "Synced N ago" footer
