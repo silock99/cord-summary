@@ -16,6 +16,8 @@ from bot.config import Settings
 from bot.language_filter import load_language_config
 from bot.providers.base import SummaryProvider
 from bot.scheduling.overnight import OvernightScheduler
+from bot.scheduling.sheet_sync import SheetSyncScheduler
+from bot.sources.sheets import SheetTransferTargetStore, self_heal_transfers_store
 from bot.storage.cache import TTLCache
 from bot.storage.recruiting_store import RecruitingStore
 
@@ -35,6 +37,12 @@ class SummaryBot(commands.Bot):
         self.transfer_store = RecruitingStore(Path("data/transfers.json"))
         self.transfer_cache = TTLCache(default_ttl=900.0)  # 15-minute TTL
         self.roster_store = RecruitingStore(Path("data/roster.json"))
+        # Phase 13: basketball transfer targets sourced from Google Sheet
+        self.sheet_target_store = SheetTransferTargetStore(
+            Path("data/transfer_targets_basketball.json")
+        )
+        self.sheet_target_store.load_snapshot()  # D-07: serve last known-good on cold start
+        self.sheet_sync_scheduler: SheetSyncScheduler | None = None
 
     async def setup_hook(self) -> None:
         """Register commands and sync to the configured guild (INFRA-03). Fires once before connecting."""
@@ -67,9 +75,36 @@ class SummaryBot(commands.Bot):
         # Load language filter configuration (Phase 5: LANG-01, LANG-02)
         load_language_config()
 
+        # Phase 13: self-heal — remove any stale basketball+target rows from
+        # data/transfers.json so the sheet is the unambiguous source (D-19).
+        self_heal_transfers_store(self.transfer_store)
+
+        # Phase 13: initial sheet fetch before the hourly loop starts (D-06).
+        # Failure here is non-fatal — loaded snapshot continues serving (D-08).
+        if self.settings.sheet_service_account_info is not None:
+            try:
+                count = await self.sheet_target_store.refresh(
+                    self.settings.sheet_service_account_info,
+                    self.settings.transfer_target_sheet_id,
+                    self.settings.transfer_target_sheet_tab,
+                )
+                logger.info(f"Initial sheet sync OK: {count} basketball targets cached")
+            except Exception as e:
+                logger.warning(
+                    f"Initial sheet sync failed ({type(e).__name__}); "
+                    f"continuing with snapshot ({len(self.sheet_target_store.targets)} cached)"
+                )
+        else:
+            logger.info("Sheet sync disabled: no service account configured")
+
         # Start scheduled summary tasks (overnight + hourly)
         self.scheduler = OvernightScheduler(self)
         self.scheduler.start()
+
+        # Phase 13: start hourly sheet sync scheduler
+        self.sheet_sync_scheduler = SheetSyncScheduler(self)
+        self.sheet_sync_scheduler.start()
+
         logger.info("Summary schedulers started")
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
