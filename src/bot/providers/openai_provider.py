@@ -35,6 +35,7 @@ class OpenAISummaryProvider:
                     {"role": "system", "content": prompt},
                     {"role": "user", "content": text},
                 ],
+                temperature=0.2,
             )
             result = response.choices[0].message.content
             if result is None:

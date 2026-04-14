@@ -30,6 +30,7 @@ class AnthropicSummaryProvider:
             response = await self.client.messages.create(
                 model=self.model,
                 max_tokens=4096,
+                temperature=0.2,
                 system=prompt,
                 messages=[
                     {"role": "user", "content": text},
