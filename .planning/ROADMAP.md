@@ -122,7 +122,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12
+Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -141,10 +141,11 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12
 
 ### Phase 13: Connect a Google Sheet to the recruit list function
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** Make a configured Google Sheet the read-only source of truth for the basketball transfer-target slice — hourly gspread-based sync into an in-memory cache with an atomic JSON snapshot, /transfer-add and /transfer-remove disabled for that slice with a "managed in the Google Sheet" message, /transfer-list renders the new sheet field set (Name | Position | Former School | Height/Weight | KU Interest | Made Contact | Notes) with no stars and a "Synced N ago" footer, and a startup self-heal of data/transfers.json. Recruits, roster, football, and outgoing-basketball transfers are untouched.
+**Requirements**: TRANSFER-SHEET-01, TRANSFER-SHEET-02, TRANSFER-SHEET-03, TRANSFER-SHEET-04, TRANSFER-SHEET-05, TRANSFER-SHEET-06, TRANSFER-SHEET-07
 **Depends on:** Phase 12
-**Plans:** 0 plans
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 13 to break down)
+- [ ] 13-01-PLAN.md — Data path: gspread dep, Settings, TransferTarget model, SheetTransferTargetStore with atomic snapshot, SheetSyncScheduler, client.py wiring (snapshot load, self-heal, initial fetch, hourly loop)
+- [ ] 13-02-PLAN.md — Command layer: guard /transfer-add and /transfer-remove for basketball+target, rewrite /transfer-list basketball render to use TransferTarget fields with "Synced N ago" footer

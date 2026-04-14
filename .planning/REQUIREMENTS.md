@@ -54,6 +54,16 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 - [x] **INFRA-04**: Channel-to-sport mapping configurable via environment variables
 - [x] **INFRA-05**: Authorized user IDs configurable for recruiting list management
 
+### Transfer Target Sheet Sync (Phase 13)
+
+- [ ] **TRANSFER-SHEET-01**: Bot reads the basketball transfer target list from a configured Google Sheet on an hourly schedule via discord.ext.tasks.loop(hours=1)
+- [ ] **TRANSFER-SHEET-02**: Service account credentials are loaded by pydantic-settings from env (inline JSON primary, file path fallback) with READONLY scopes
+- [ ] **TRANSFER-SHEET-03**: Sheet-sourced targets are cached in memory with an atomic JSON snapshot at data/transfer_targets_basketball.json for restart continuity; added_at is preserved across refreshes on normalized name match
+- [ ] **TRANSFER-SHEET-04**: Refresh failures keep the stale cache, log a warning, and DM admins via the existing Phase 6 error-alerting pipeline (no cache clearing on failure)
+- [ ] **TRANSFER-SHEET-05**: /transfer-add and /transfer-remove are disabled for sport=basketball AND type=target with a clear "managed in the Google Sheet" message; other slices (basketball outgoing, football) are unchanged
+- [ ] **TRANSFER-SHEET-06**: /transfer-list for basketball targets renders the TransferTarget field set (Name, Position, Former School, Height/Weight, KU Interest Level, Made Contact, Notes) with no stars display and a "Synced N ago" footer; football and basketball outgoing rendering is unchanged
+- [ ] **TRANSFER-SHEET-07**: Bot startup self-heals data/transfers.json by removing any pre-existing sport=basketball, type=target entries so the sheet is the unambiguous source
+
 ## Future Requirements
 
 ### Potential Enhancements
@@ -62,6 +72,10 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 - **PORTAL-F02**: Real-time portal alerts when new players enter the portal
 - **RECRUIT-F01**: School name autocomplete for add command
 - **STATS-F01**: Player comparison features (side-by-side stats)
+- **TRANSFER-SHEET-F01**: Two-way sync / write-through from Discord commands back to the sheet
+- **TRANSFER-SHEET-F02**: Sheet-sourced recruits, roster, football transfers, and outgoing basketball transfers
+- **TRANSFER-SHEET-F03**: Manual /refresh-transfer-targets admin command for on-demand pull
+- **TRANSFER-SHEET-F04**: Env-configurable sheet column mapping (currently a code constant)
 
 ## Out of Scope
 
@@ -109,12 +123,19 @@ Requirements for Athletics Intelligence milestone. Each maps to roadmap phases.
 | INFRA-03 | Phase 8 | Pending |
 | INFRA-04 | Phase 7 | Complete |
 | INFRA-05 | Phase 7 | Complete |
+| TRANSFER-SHEET-01 | Phase 13 | Pending |
+| TRANSFER-SHEET-02 | Phase 13 | Pending |
+| TRANSFER-SHEET-03 | Phase 13 | Pending |
+| TRANSFER-SHEET-04 | Phase 13 | Pending |
+| TRANSFER-SHEET-05 | Phase 13 | Pending |
+| TRANSFER-SHEET-06 | Phase 13 | Pending |
+| TRANSFER-SHEET-07 | Phase 13 | Pending |
 
 **Coverage:**
-- v1.1 requirements: 29 total
-- Mapped to phases: 29
+- v1.1 requirements: 36 total
+- Mapped to phases: 36
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-07*
-*Last updated: 2026-04-08 after Phase 11 planning*
+*Last updated: 2026-04-14 after Phase 13 planning*
