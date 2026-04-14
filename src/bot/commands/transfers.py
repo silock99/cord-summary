@@ -18,6 +18,36 @@ KU_BLUE = 0x0051BA
 STAR_EMOJI = "\u2b50"
 MAX_PLAYERS_PER_EMBED = 10
 
+# Phase 13 / D-02: basketball transfer targets are read-only from the Google Sheet.
+SHEET_MANAGED_MSG = (
+    "Basketball transfer targets are managed in the Google Sheet, not via slash "
+    "commands. Edit the sheet and wait up to an hour for the bot to pick up the change."
+)
+
+
+def _format_synced_ago(last_synced_at) -> str:
+    """Return a human-friendly 'Synced N ago' or 'Sync pending' string (D-21).
+
+    last_synced_at: datetime | None (UTC-aware)
+    """
+    if last_synced_at is None:
+        return "Sync pending"
+    delta = datetime.now(timezone.utc) - last_synced_at
+    seconds = int(delta.total_seconds())
+    if seconds < 45:
+        return "Synced just now"
+    minutes = seconds // 60
+    if minutes < 60:
+        unit = "minute" if minutes == 1 else "minutes"
+        return f"Synced {minutes} {unit} ago"
+    hours = minutes // 60
+    if hours < 24:
+        unit = "hour" if hours == 1 else "hours"
+        return f"Synced {hours} {unit} ago"
+    days = hours // 24
+    unit = "day" if days == 1 else "days"
+    return f"Synced {days} {unit} ago"
+
 
 def register_transfer_commands(bot) -> None:
     """Register the /transfer-add, /transfer-remove, /transfer-list commands."""
@@ -71,6 +101,10 @@ def register_transfer_commands(bot) -> None:
         await interaction.response.defer(ephemeral=True)
         sport = get_sport_from_channel(interaction.channel_id, interaction.client.settings)
         transfer_type = type.value if type else "target"
+        # Phase 13 / D-02: basketball transfer targets are sheet-managed.
+        if sport == "basketball" and transfer_type == "target":
+            await interaction.edit_original_response(content=SHEET_MANAGED_MSG)
+            return
         player = bot.transfer_store.add_player(sport, name, position, school, stars, player_type=transfer_type)
         if player is not None:
             bot.transfer_cache.clear()
@@ -111,6 +145,18 @@ def register_transfer_commands(bot) -> None:
     ) -> None:
         await interaction.response.defer(ephemeral=True)
         sport = get_sport_from_channel(interaction.channel_id, interaction.client.settings)
+        # Phase 13 / D-02: basketball targets are sheet-managed. Remove only allowed
+        # when the matching entry is explicitly "outgoing"; any "target" match — or
+        # an unknown name in a basketball channel — returns the sheet-managed message.
+        if sport == "basketball":
+            existing = next(
+                (p for p in bot.transfer_store.list_players("basketball")
+                 if p.name.lower() == name.lower()),
+                None,
+            )
+            if existing is None or existing.type == "target":
+                await interaction.edit_original_response(content=SHEET_MANAGED_MSG)
+                return
         removed, suggestions = bot.transfer_store.remove_player(sport, name)
         if removed:
             bot.transfer_cache.clear()
