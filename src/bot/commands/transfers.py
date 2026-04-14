@@ -187,6 +187,105 @@ def register_transfer_commands(bot) -> None:
     ) -> None:
         await interaction.response.defer(ephemeral=True)
         sport = get_sport_from_channel(interaction.channel_id, interaction.client.settings)
+        emoji = SPORT_EMOJI.get(sport, "")
+        title = f"{emoji} KU {SPORT_TITLE.get(sport, sport.title())} Transfer List"
+
+        # --- Phase 13: basketball branch (sheet targets + local outgoing) ---
+        # Basketball targets come from bot.sheet_target_store (read-only, hourly
+        # sync per D-01 + D-05). Outgoing entries remain locally-managed in
+        # bot.transfer_store. Merge at render time (D-04). bot.transfer_cache
+        # is NOT consulted here — the sheet store already caches in-memory.
+        if sport == "basketball":
+            targets = list(bot.sheet_target_store.targets)
+            outgoing = [
+                p for p in bot.transfer_store.list_players("basketball", position=position)
+                if p.type == "outgoing"
+            ]
+            if position:
+                targets = [t for t in targets if t.position.lower() == position.lower()]
+
+            footer = _format_synced_ago(bot.sheet_target_store.last_synced_at)
+
+            if not targets and not outgoing:
+                desc = (
+                    f"No {position.upper()} players on the basketball transfer list."
+                    if position
+                    else "No players on the basketball transfer list yet."
+                )
+                embed = discord.Embed(title=title, description=desc, color=KU_BLUE)
+                embed.set_footer(text=footer)
+                await interaction.edit_original_response(embeds=[embed])
+                return
+
+            sections = []
+            if outgoing:
+                sections.append(("\U0001f6aa Transfers Out", "outgoing", outgoing))
+            if targets:
+                sections.append(("\U0001f3af Transfer Targets", "target", targets))
+
+            embeds: list[discord.Embed] = []
+            current_embed = discord.Embed(title=title, color=KU_BLUE)
+            player_count = 0
+            for section_title, kind, section_players in sections:
+                current_embed.add_field(
+                    name=section_title,
+                    value=f"*{len(section_players)} player(s)*",
+                    inline=False,
+                )
+                for player in section_players:
+                    if player_count >= MAX_PLAYERS_PER_EMBED:
+                        current_embed.set_footer(text=footer)
+                        embeds.append(current_embed)
+                        current_embed = discord.Embed(
+                            title=f"{title} (cont.)", color=KU_BLUE
+                        )
+                        player_count = 0
+                        current_embed.add_field(
+                            name=section_title, value="*continued*", inline=False
+                        )
+                    if kind == "outgoing":
+                        # Existing PlayerEntry layout (keeps stars display).
+                        star_display = (
+                            STAR_EMOJI * player.stars if player.stars else "Unrated"
+                        )
+                        field_name = f"{player.name} {star_display}"[:256]
+                        added_dt = datetime.fromisoformat(player.added_at)
+                        field_value = (
+                            f"{player.position} | {player.school}\n"
+                            f"Added {discord.utils.format_dt(added_dt, style='R')}"
+                        )
+                    else:
+                        # TransferTarget layout — no stars (D-16).
+                        # All values treated as plain strings (T-13-11).
+                        field_name = player.name[:256]
+                        lines = []
+                        if player.position:
+                            lines.append(f"Pos: {player.position}")
+                        if player.former_school:
+                            lines.append(f"From: {player.former_school}")
+                        if player.height_weight:
+                            lines.append(f"H/W: {player.height_weight}")
+                        if player.ku_interest_level:
+                            lines.append(f"KU Interest: {player.ku_interest_level}")
+                        if player.made_contact:
+                            lines.append(f"Made Contact: {player.made_contact}")
+                        if player.notes:
+                            lines.append(f"Notes: {player.notes}")
+                        field_value = "\n".join(lines) or "(no details)"
+                    current_embed.add_field(
+                        name=field_name, value=field_value[:1024], inline=False
+                    )
+                    player_count += 1
+
+            current_embed.set_footer(text=footer)
+            embeds.append(current_embed)
+
+            await interaction.edit_original_response(embeds=embeds[:10])
+            for i in range(10, len(embeds), 10):
+                await interaction.followup.send(embeds=embeds[i:i + 10])
+            return
+        # --- end basketball branch ---
+
         cache_key = f"transfer:{sport}:{position.lower()}" if position else f"transfer:{sport}"
         cached = bot.transfer_cache.get(cache_key)
         if cached is not None:
@@ -194,8 +293,6 @@ def register_transfer_commands(bot) -> None:
         else:
             players = bot.transfer_store.list_players(sport, position=position)
             bot.transfer_cache.set(cache_key, players)
-        emoji = SPORT_EMOJI.get(sport, "")
-        title = f"{emoji} KU {SPORT_TITLE.get(sport, sport.title())} Transfer List"
 
         if not players and position:
             embed = discord.Embed(
