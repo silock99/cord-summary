@@ -32,3 +32,33 @@ class PlayerEntry:
     @classmethod
     def from_dict(cls, data: dict) -> "PlayerEntry":
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
+
+
+@dataclass
+class TransferTarget:
+    """Sheet-sourced basketball transfer target (Phase 13, D-14)."""
+
+    name: str
+    position: str = ""
+    former_school: str = ""
+    height_weight: str = ""
+    ku_interest_level: str = ""
+    made_contact: str = ""
+    notes: str = ""
+    added_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+    def to_dict(self) -> dict:
+        return {
+            "name": self.name,
+            "position": self.position,
+            "former_school": self.former_school,
+            "height_weight": self.height_weight,
+            "ku_interest_level": self.ku_interest_level,
+            "made_contact": self.made_contact,
+            "notes": self.notes,
+            "added_at": self.added_at,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "TransferTarget":
+        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})

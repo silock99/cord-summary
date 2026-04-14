@@ -1,5 +1,11 @@
+import json
+import logging
+from pathlib import Path
+
 from pydantic import computed_field, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -66,6 +72,45 @@ class Settings(BaseSettings):
 
     # Thread delivery (OUT-04, D-08, D-09)
     use_threads: bool = False
+
+    # Phase 13 / D-09, D-11, D-12: Google Sheets for basketball transfer targets
+    sheet_service_account_json_raw: str = Field(default="", alias="SHEET_SERVICE_ACCOUNT_JSON")
+    sheet_service_account_file: str = Field(default="", alias="SHEET_SERVICE_ACCOUNT_FILE")
+    transfer_target_sheet_id: str = Field(
+        default="1wnI1UQ_YvSXuQUS7AqCNb2tp_1Gf45zUPYPX3FiPMog",
+        alias="TRANSFER_TARGET_SHEET_ID",
+    )
+    transfer_target_sheet_tab: str = Field(
+        default="Master List 2025",
+        alias="TRANSFER_TARGET_SHEET_TAB",
+    )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def sheet_service_account_info(self) -> dict | None:
+        """Resolve Google service account credentials from env (inline JSON) or file.
+
+        Returns None if unconfigured or unparseable. On JSONDecodeError, logs ONLY
+        a fixed message — never the raw value or exception text (may contain key
+        fragments) per threat model T-13-01.
+        """
+        raw = self.sheet_service_account_json_raw
+        if raw:
+            try:
+                return json.loads(raw)
+            except json.JSONDecodeError:
+                logger.warning("SHEET_SERVICE_ACCOUNT_JSON is not valid JSON")
+                return None
+        file_path = self.sheet_service_account_file
+        if file_path:
+            p = Path(file_path)
+            if p.exists():
+                try:
+                    return json.loads(p.read_text(encoding="utf-8"))
+                except json.JSONDecodeError:
+                    logger.warning("SHEET_SERVICE_ACCOUNT_FILE is not valid JSON")
+                    return None
+        return None
 
     @computed_field  # type: ignore[prop-decorator]
     @property
