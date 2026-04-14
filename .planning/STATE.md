@@ -83,6 +83,7 @@ None yet.
 - Phase 10 added: Current Roster — import/manage KU roster for both sports with stats fetching
 - Phase 11 added: Help Command — display bot capabilities and command usage
 - Phase 12 added: Refine the summary the bot produces
+- Phase 13 added: Connect a Google Sheet to the recruit list function
 
 ### Blockers/Concerns
 

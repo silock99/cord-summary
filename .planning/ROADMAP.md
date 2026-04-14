@@ -138,3 +138,13 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12
 | 10. Current Roster | v1.1 | 2/2 | Complete    | 2026-04-08 |
 | 11. Help Command | v1.1 | 1/1 | Complete    | 2026-04-08 |
 | 12. Refine Summary | v1.1 | 2/2 | Complete    | 2026-04-13 |
+
+### Phase 13: Connect a Google Sheet to the recruit list function
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 12
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 13 to break down)
