@@ -199,10 +199,7 @@ def register_transfer_commands(bot) -> None:
         # bot.transfer_store. Merge at render time (D-04). bot.transfer_cache
         # is NOT consulted here — the sheet store already caches in-memory.
         if sport == "basketball":
-            targets = [
-                t for t in bot.sheet_target_store.targets
-                if t.ku_interest_level.strip().lower() in ("high", "medium")
-            ]
+            targets = list(bot.sheet_target_store.targets)
             outgoing = [
                 p for p in bot.transfer_store.list_players("basketball", position=position)
                 if p.type == "outgoing"
