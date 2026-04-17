@@ -273,7 +273,7 @@ async def test_transfer_list_basketball_renders_sheet_target_fields(tmp_path: Pa
 
 @pytest.mark.asyncio
 async def test_transfer_list_basketball_footer_contains_synced_ago(tmp_path: Path):
-    target = TransferTarget(name="Jon Doe", position="G")
+    target = TransferTarget(name="Jon Doe", position="G", ku_interest_level="High")
     synced = datetime.now(timezone.utc) - timedelta(minutes=5)
     bot = _make_bot(tmp_path, sheet_targets=[target], sheet_last_synced=synced)
     interaction = _make_interaction(bot, BASKETBALL_CHANNEL_ID)
@@ -288,7 +288,7 @@ async def test_transfer_list_basketball_footer_contains_synced_ago(tmp_path: Pat
 
 @pytest.mark.asyncio
 async def test_transfer_list_basketball_footer_sync_pending_when_none(tmp_path: Path):
-    target = TransferTarget(name="Jon Doe", position="G")
+    target = TransferTarget(name="Jon Doe", position="G", ku_interest_level="High")
     bot = _make_bot(tmp_path, sheet_targets=[target], sheet_last_synced=None)
     interaction = _make_interaction(bot, BASKETBALL_CHANNEL_ID)
     tlist = _get_callback(bot, "transfer-list")
@@ -303,7 +303,7 @@ async def test_transfer_list_basketball_footer_sync_pending_when_none(tmp_path: 
 @pytest.mark.asyncio
 async def test_transfer_list_basketball_includes_outgoing_section_from_transfer_store(tmp_path: Path):
     # One locally-managed outgoing entry + one sheet target
-    target = TransferTarget(name="Sheet Target", position="G", former_school="UCLA")
+    target = TransferTarget(name="Sheet Target", position="G", former_school="UCLA", ku_interest_level="High")
     synced = datetime.now(timezone.utc) - timedelta(minutes=3)
     bot = _make_bot(tmp_path, sheet_targets=[target], sheet_last_synced=synced)
     bot.transfer_store.add_player("basketball", "Out Guy", "F", "KU", 3, player_type="outgoing")
@@ -369,7 +369,7 @@ async def test_transfer_list_basketball_empty_shows_empty_state_with_footer(tmp_
 @pytest.mark.asyncio
 async def test_transfer_list_basketball_targets_count_toward_pagination_cap(tmp_path: Path):
     # 12 targets → 2 embeds (10 + 2) at MAX_PLAYERS_PER_EMBED=10
-    targets = [TransferTarget(name=f"Player {i}", position="G") for i in range(12)]
+    targets = [TransferTarget(name=f"Player {i}", position="G", ku_interest_level="High") for i in range(12)]
     synced = datetime.now(timezone.utc)
     bot = _make_bot(tmp_path, sheet_targets=targets, sheet_last_synced=synced)
     interaction = _make_interaction(bot, BASKETBALL_CHANNEL_ID)
