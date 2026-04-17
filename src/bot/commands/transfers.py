@@ -179,12 +179,19 @@ def register_transfer_commands(bot) -> None:
     )
     @app_commands.describe(
         position="Filter by position (e.g., QB, WR, PG)",
+        interest="Filter by KU interest level (e.g., High, Medium, Low)",
         public="Post the list publicly in the channel (admin only)",
     )
+    @app_commands.choices(interest=[
+        app_commands.Choice(name="High", value="high"),
+        app_commands.Choice(name="Medium", value="medium"),
+        app_commands.Choice(name="Low", value="low"),
+    ])
     @require_sport_channel()
     async def transfer_list(
         interaction: discord.Interaction,
         position: str | None = None,
+        interest: str | None = None,
         public: bool = False,
     ) -> None:
         ephemeral = not (public and interaction.user.id in interaction.client.settings.admin_user_ids)
@@ -206,6 +213,8 @@ def register_transfer_commands(bot) -> None:
             ]
             if position:
                 targets = [t for t in targets if t.position.lower() == position.lower()]
+            if interest:
+                targets = [t for t in targets if t.ku_interest_level.strip().lower() == interest.lower()]
 
             footer = _format_synced_ago(bot.sheet_target_store.last_synced_at)
 
