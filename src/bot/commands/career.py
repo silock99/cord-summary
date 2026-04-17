@@ -34,10 +34,14 @@ def register_career_commands(bot) -> None:
         name="stats",
         description="Look up college career stats for a player",
     )
-    @app_commands.describe(player="Player name (autocompletes from recruit/transfer/roster lists)")
+    @app_commands.describe(
+        player="Player name (autocompletes from recruit/transfer/roster lists)",
+        public="Post the stats publicly in the channel (admin only)",
+    )
     @require_sport_channel()
-    async def stats(interaction: discord.Interaction, player: str) -> None:
-        await interaction.response.defer(ephemeral=True)
+    async def stats(interaction: discord.Interaction, player: str, public: bool = False) -> None:
+        ephemeral = not (public and interaction.user.id in interaction.client.settings.admin_user_ids)
+        await interaction.response.defer(ephemeral=ephemeral)
         sport = get_sport_from_channel(interaction.channel_id, interaction.client.settings)
         emoji = SPORT_EMOJI.get(sport, "")
 

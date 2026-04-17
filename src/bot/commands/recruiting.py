@@ -121,9 +121,11 @@ def register_recruit_commands(bot) -> None:
         name="recruit-list",
         description="View the recruiting list for this channel's sport",
     )
+    @app_commands.describe(public="Post the list publicly in the channel (admin only)")
     @require_sport_channel()
-    async def recruit_list(interaction: discord.Interaction) -> None:
-        await interaction.response.defer(ephemeral=True)
+    async def recruit_list(interaction: discord.Interaction, public: bool = False) -> None:
+        ephemeral = not (public and interaction.user.id in interaction.client.settings.admin_user_ids)
+        await interaction.response.defer(ephemeral=ephemeral)
         sport = get_sport_from_channel(interaction.channel_id, interaction.client.settings)
         players = bot.recruit_store.list_players(sport)
         emoji = SPORT_EMOJI.get(sport, "")

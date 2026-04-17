@@ -52,6 +52,7 @@ def register_summary_command(bot) -> None:
     @app_commands.describe(
         timerange="Time period to summarize",
         channel="Channel to summarize (defaults to current channel)",
+        public="Post the summary publicly in the channel (admin only)",
     )
     @app_commands.choices(timerange=TIMERANGE_CHOICES)
     @app_commands.autocomplete(channel=channel_autocomplete)
@@ -59,6 +60,7 @@ def register_summary_command(bot) -> None:
         interaction: discord.Interaction,
         timerange: int = 240,
         channel: str | None = None,
+        public: bool = False,
     ) -> None:
         # Step 0 - Cooldown check
         cooldown = bot.settings.summary_cooldown_seconds
@@ -84,7 +86,8 @@ def register_summary_command(bot) -> None:
                 return
 
         # Step 1 - Defer immediately (per D-04)
-        await interaction.response.defer(ephemeral=True)
+        ephemeral = not (public and interaction.user.id in bot.settings.admin_user_ids)
+        await interaction.response.defer(ephemeral=ephemeral)
 
         # Step 2 - Resolve target channel (per D-09)
         if channel:

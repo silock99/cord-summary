@@ -179,13 +179,16 @@ def register_transfer_commands(bot) -> None:
     )
     @app_commands.describe(
         position="Filter by position (e.g., QB, WR, PG)",
+        public="Post the list publicly in the channel (admin only)",
     )
     @require_sport_channel()
     async def transfer_list(
         interaction: discord.Interaction,
         position: str | None = None,
+        public: bool = False,
     ) -> None:
-        await interaction.response.defer(ephemeral=True)
+        ephemeral = not (public and interaction.user.id in interaction.client.settings.admin_user_ids)
+        await interaction.response.defer(ephemeral=ephemeral)
         sport = get_sport_from_channel(interaction.channel_id, interaction.client.settings)
         emoji = SPORT_EMOJI.get(sport, "")
         title = f"{emoji} KU {SPORT_TITLE.get(sport, sport.title())} Transfer List"

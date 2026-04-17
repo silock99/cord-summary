@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 
 import discord
+from discord import app_commands
 
 
 KU_BLUE = 0x0051BA
@@ -87,7 +88,9 @@ def register_help_commands(bot) -> None:
     """Register the /cordbot help command."""
 
     @bot.tree.command(name="cordbot", description="Show all bot commands and how to use them")
-    async def cordbot(interaction: discord.Interaction) -> None:
+    @app_commands.describe(public="Post the help publicly in the channel (admin only)")
+    async def cordbot(interaction: discord.Interaction, public: bool = False) -> None:
         visible = get_visible_commands(interaction)
         embed = build_help_embed(visible)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        ephemeral = not (public and interaction.user.id in interaction.client.settings.admin_user_ids)
+        await interaction.response.send_message(embed=embed, ephemeral=ephemeral)

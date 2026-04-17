@@ -120,9 +120,11 @@ def register_roster_commands(bot) -> None:
         name="roster-list",
         description="View the current KU roster for this channel's sport",
     )
+    @app_commands.describe(public="Post the list publicly in the channel (admin only)")
     @require_sport_channel()
-    async def roster_list(interaction: discord.Interaction) -> None:
-        await interaction.response.defer(ephemeral=True)
+    async def roster_list(interaction: discord.Interaction, public: bool = False) -> None:
+        ephemeral = not (public and interaction.user.id in interaction.client.settings.admin_user_ids)
+        await interaction.response.defer(ephemeral=ephemeral)
         sport = get_sport_from_channel(interaction.channel_id, interaction.client.settings)
         players = bot.roster_store.list_players(sport)
         emoji = SPORT_EMOJI.get(sport, "")
